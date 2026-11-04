@@ -5,7 +5,7 @@
 ```text
 Telegram-Mascot/
 ├── mascot/        собачка: SVG, анимации, React-компонент, демо
-├── accessories/   аксессуары (следующий этап)
+├── accessories/   аксессуары: новогодняя шапочка, примерочная
 └── screen/        экран из Figma (следующий этап)
 ```
 
@@ -21,3 +21,15 @@ npm run dev
 ```
 
 Подробности — в [`mascot/README.md`](mascot/README.md).
+
+## Аксессуары
+
+Надеваются на собачку поверх, не меняя `mascot/`. Шапочку можно включать и выключать.
+
+```bash
+cd accessories
+npm install
+npm run dev
+```
+
+Подробности — в [`accessories/README.md`](accessories/README.md).
