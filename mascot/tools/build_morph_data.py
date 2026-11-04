@@ -9,14 +9,6 @@ POSE2 = os.path.join(HERE, '..', 'assets', 'dog-pose-2.svg')
 OUT = os.path.join(HERE, '..', 'animations', 'dogMorphData.json')
 import numpy as np
 
-def paths(fn):
-    s = open(fn).read()
-    return re.findall(r'<path ([^>]*?)/>', s)
-
-def attr(p, name):
-    m = re.search(r'\b' + name + r'="([^"]*)"', p)
-    return m.group(1) if m else None
-
 def parse(d):
     toks = re.findall(r'[MLCZ]|-?\d*\.?\d+(?:e-?\d+)?', d)
     i, segs, cur, start, closed = 0, [], None, None, False
@@ -120,89 +112,183 @@ def flat(segs):
     pts = [segs[0][0]] + [p for s in segs for p in s[1:]]
     return [round(float(v), 3) for p in pts for v in p]
 
-P1 = paths(POSE1); P2 = paths(POSE2)
+# ---------- SVG reading: paths, ellipses (as paths), masks, gradients ----------
+import xml.etree.ElementTree as ET
+SVGNS = '{http://www.w3.org/2000/svg}'
 
-# Pose-1 geometry fix: the outer contour of the left front leg ended in a round cap just beside the
-# body outline, so it read as a chopped stub. Its top is extended upward exactly along the body
-# outline (same curve, same colour, same width), so the leg contour grows out of the body line.
-_FL_HL = 'M84.3921 203.083C81.1278 195.782 76.7542 177.252 77.077 162.145'
-assert _FL_HL in P1[11]
-P1[11] = P1[11].replace(_FL_HL, _FL_HL + 'C76.591 157.106 76.683 151.925 77.211 146.727')
+def ellipse_d(cx, cy, rx, ry, rot_deg):
+    """Ellipse as 4 cubic arcs, rotation baked into the points."""
+    k = 0.5522847498; a = math.radians(rot_deg); ca, sa = math.cos(a), math.sin(a)
+    P = lambda x, y: (cx + ca * x - sa * y, cy + sa * x + ca * y)
+    q = [(rx, 0), (rx, k * ry), (k * rx, ry), (0, ry), (-k * rx, ry), (-rx, k * ry), (-rx, 0),
+         (-rx, -k * ry), (-k * rx, -ry), (0, -ry), (k * rx, -ry), (rx, -k * ry), (rx, 0)]
+    pts = [P(*v) for v in q]
+    d = 'M%.4f %.4f' % pts[0]
+    for i in range(1, 13, 3):
+        d += 'C%.4f %.4f %.4f %.4f %.4f %.4f' % (*pts[i], *pts[i + 1], *pts[i + 2])
+    return d + 'Z'
 
-def grads(fn):
-    s = open(fn).read(); out = {}
-    for m in re.finditer(r'<linearGradient id="([^"]+)" x1="([^"]+)" y1="([^"]+)" x2="([^"]+)" y2="([^"]+)"[^>]*>(.*?)</linearGradient>', s, re.S):
-        stops = []
-        for st in re.finditer(r'<stop([^>]*)/>', m.group(6)):
-            a = st.group(1)
-            col = re.search(r'stop-color="([^"]+)"', a).group(1)
-            op = re.search(r'stop-opacity="([^"]+)"', a); off = re.search(r'offset="([^"]+)"', a)
-            stops.append({'c': hexrgb(col), 'o': float(op.group(1)) if op else 1, 'off': float(off.group(1)) if off else 0})
-        out[m.group(1)] = {'p': [float(m.group(i)) for i in range(2, 6)], 'stops': stops}
-    return out
+def parse_transform(tf):
+    """Supports rotate(a [cx cy]) and matrix(a b c d e f) → [a b c d e f]."""
+    if not tf: return None
+    v = [float(x) for x in re.findall(r'-?\d*\.?\d+(?:e-?\d+)?', tf)]
+    if tf.strip().startswith('matrix'): return v
+    if tf.strip().startswith('rotate'):
+        a = math.radians(v[0]); cx, cy = (v[1], v[2]) if len(v) > 2 else (0.0, 0.0)
+        c, s_ = math.cos(a), math.sin(a)
+        return [c, s_, -s_, c, cx - c * cx + s_ * cy, cy - s_ * cx - c * cy]
+    raise ValueError('unsupported transform ' + tf)
+
+def apply_affine(m, x, y):
+    return m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]
+
+def transform_d(d, m):
+    toks = re.findall(r'[MLCZ]|-?\d*\.?\d+(?:e-?\d+)?', d); out, nums = [], []
+    for tk in toks:
+        if tk in 'MLCZ':
+            out.append(tk)
+        else:
+            nums.append(float(tk))
+            if len(nums) == 2:
+                out.append('%.4f %.4f' % apply_affine(m, *nums)); nums = []
+    return ' '.join(out)
+
+def transformed_paint(p, m):
+    """Gradient (userSpaceOnUse) of an element that carries a transform → the same gradient in parent space."""
+    if p is None or m is None or p['k'] == 's': return p
+    if p['k'] == 'l':
+        x1, y1 = apply_affine(m, p['p'][0], p['p'][1]); x2, y2 = apply_affine(m, p['p'][2], p['p'][3])
+        return dict(p, p=[x1, y1, x2, y2])
+    a, b, c, d, e, f = p['m']; A, B, C, D, E_, F = m
+    return dict(p, m=[A * a + C * b, B * a + D * b, A * c + C * d, B * c + D * d, A * e + C * f + E_, B * e + D * f + F])
+
+def read_svg(fn):
+    root = ET.parse(fn).getroot()
+    masks, grads, els = {}, {}, []
+    def stops_of(g):
+        out = []
+        for st in g.findall(SVGNS + 'stop'):
+            out.append({'c': hexrgb(st.get('stop-color', '#000000')), 'o': float(st.get('stop-opacity', 1)),
+                        'off': float(st.get('offset', 0))})
+        return out
+    for g in root.iter(SVGNS + 'linearGradient'):
+        grads[g.get('id')] = {'k': 'l', 'p': [float(g.get(a)) for a in ('x1', 'y1', 'x2', 'y2')], 'stops': stops_of(g)}
+    for g in root.iter(SVGNS + 'radialGradient'):
+        cx, cy, r = float(g.get('cx', 0)), float(g.get('cy', 0)), float(g.get('r', 1))
+        m = [1, 0, 0, 1, 0, 0]
+        gt = g.get('gradientTransform')
+        if gt:
+            m = [float(v) for v in re.findall(r'-?\d*\.?\d+(?:e-?\d+)?', gt)]
+        # unit circle → gradient space: gradientTransform · translate(cx,cy) · scale(r)
+        a, b, c, d, e, f = m
+        grads[g.get('id')] = {'k': 'r', 'm': [a * r, b * r, c * r, d * r, a * cx + c * cy + e, b * cx + d * cy + f],
+                              'stops': stops_of(g)}
+    for mk in root.iter(SVGNS + 'mask'):
+        p = mk.find(SVGNS + 'path'); masks[mk.get('id')] = p.get('d')
+    def walk(node):
+        for ch in node:
+            tag = ch.tag.replace(SVGNS, '')
+            if tag in ('defs', 'mask', 'clipPath'):
+                continue
+            if tag == 'g':
+                walk(ch); continue
+            if tag == 'path':
+                d = ch.get('d')
+            elif tag == 'ellipse':
+                d = ellipse_d(float(ch.get('cx')), float(ch.get('cy')), float(ch.get('rx')), float(ch.get('ry')), 0.0)
+            else:
+                continue
+            e = {k: ch.get(k) for k in ('fill', 'stroke', 'fill-opacity', 'opacity', 'stroke-width', 'mask')}
+            e['tf'] = parse_transform(ch.get('transform'))
+            if e['tf'] is not None:
+                d = transform_d(d, e['tf'])   # bake the element transform into its points
+            e['d'] = d
+            if e['mask']:
+                e['mask'] = masks[e['mask'][5:-1]]
+            els.append(e)
+    walk(root)
+    return els, grads
 
 def hexrgb(c):
     c = {'white': '#FFFFFF', 'black': '#000000'}.get(c, c)
     return [int(c[i:i+2], 16) for i in (1, 3, 5)]
 
-G1 = grads(POSE1); G2 = grads(POSE2)
+E1, G1 = read_svg(POSE1); E2, G2 = read_svg(POSE2)
+D1 = [e['d'] for e in E1]; D2 = [e['d'] for e in E2]
 
-# part: (name, parent, anchor in pose1, fit element index (p1,p2), [elements])
-# element: (p1 index or None, p2 index)
-# legs never flip over: limit how far a leg may rotate between poses
-MAXANG = {n: math.radians(80) for n in ('backL', 'backR', 'frontL', 'frontR')}
+# ---------- Rig: body parts and the pose-1 → pose-2 element correspondence ----------
+# part: (name, parent, anchor in pose 1, [elements]); the first element is used to fit the part's rigid motion.
+# element: (pose-1 index or None, pose-2 index) — indices in document order (mask contents excluded).
+# Drawing order inside a part follows the list order.
+MAXANG = {n: math.radians(80) for n in ('backL', 'backR', 'frontL', 'frontR')}   # legs never flip over
+HEAD_FILL = 9   # pose-1 index of the head fill (the head shadow is cast from it)
 
 PARTS = [
   ('backL', 'body', (80, 166), [(0, 0), (None, 1), (1, 2), (2, 3), (3, 4)]),
   ('tail', 'body', (157, 186), [(4, 5)]),
-  ('body', None, None, [(5, 6), (6, 8), (8, 9)]),
-  ('frontL', 'body', (90, 163), [(9, 18), (10, 19), (11, 20)]),
-  ('frontR', 'body', (126, 163), [(22, 10), (23, 11), (24, 12)]),
-  ('backR', 'body', (160, 166), [(25, 13), (26, 14), (27, 15), (28, 16), (29, 17)]),
-  ('head', 'body', (106, 138), [(12, 21), (13, 22), (14, 23), (15, 24), (16, 25)]),
-  ('earR', 'head', (136, 47), [(17, 26), (18, 27), (19, 28)]),
-  ('earL', 'head', (72, 54), [(20, 29), (21, 30)]),
-  # The shadow under the head is cast by the head, so it rides in the head's frame (not the body's)
-  # and morphs between its pose-1 and pose-2 shapes there; the player clips it to the body silhouette.
-  ('shadow', 'body', (106, 138), [(7, 7)]),
+  ('body', None, None, [(5, 6), (6, 7), (8, 9)]),                  # fill, soft gradient, outline
+  ('frontL', 'body', (90, 163), [(21, 17), (22, 18)]),
+  ('frontR', 'body', (126, 163), [(23, 10), (24, 11)]),
+  ('backR', 'body', (160, 166), [(25, 12), (26, 13), (27, 14), (28, 15), (29, 16)]),
+  ('head', 'body', (106, 138), [(9, 19), (10, 28), (16, 20), (17, 27),       # fill, outline, shading, top highlight
+                                (18, 21), (19, 22), (20, 23),               # nose: fill, highlight, inner outline
+                                (30, 29), (31, 30), (32, 31),               # right eye: base, gradient, highlight
+                                (33, 24), (34, 25), (35, 26)]),             # left eye
+  ('earR', 'head', (136, 47), [(11, 32), (12, 33), (13, 34)]),
+  ('earL', 'head', (72, 54), [(14, 35), (15, 36)]),
+  # The shadow under the head is cast by the head: it rides in the head's frame and is clipped to the body.
+  ('shadow', 'body', (106, 138), [(7, 8)]),
 ]
 FORCE_FIT = {'shadow': 'head'}
+EYES = {('head', 30): 'R', ('head', 31): 'R', ('head', 32): 'R', ('head', 33): 'L', ('head', 34): 'L', ('head', 35): 'L'}
+EYE_BASE = {30, 33}
 FITS = {}
 
-def style(p, G, eid):
-    s = {}
-    f = attr(p, 'fill'); st = attr(p, 'stroke')
-    if f and f != 'none': s['fill'] = hexrgb(f); s['fo'] = float(attr(p, 'fill-opacity') or 1)
-    if st:
-        if st.startswith('url'):
-            g = G[st[5:-1]]; s['grad'] = g
-        else:
-            c = hexrgb(st); s['grad'] = None; s['stroke'] = c
-    return s
+# ---------- Paints ----------
+def paint_of(val, G):
+    """fill/stroke attribute → {'k': 's', 'c'} | {'k': 'l', 'p', 'stops'} | {'k': 'r', 'm', 'stops'} | None"""
+    if not val or val == 'none':
+        return None
+    if val.startswith('url'):
+        return G[val[5:-1]]
+    return {'k': 's', 'c': hexrgb(val)}
 
-def as_grad(sty, ref_pts):
-    if not sty or 'stroke' not in sty and sty.get('grad') is None: return None
-    if sty.get('grad'): return sty['grad']
-    c = sty['stroke']
-    return {'p': ref_pts, 'stops': [{'c': c, 'o': 1, 'off': 0}, {'c': c, 'o': 1, 'off': 1}]}
+def as_gradient(p, like):
+    """A solid paint expressed as a gradient of the same kind/geometry as `like` (for interpolation)."""
+    st = [{'c': p['c'], 'o': 1, 'off': 0}, {'c': p['c'], 'o': 1, 'off': 1}]
+    return dict({k: v for k, v in like.items() if k != 'stops'}, stops=st)
 
-# Shoulder skinning: points near the top of a leg follow the body, points near the paw follow the leg.
-# (y where weight is fully body, y where it is fully leg) in pose-1 coordinates.
-SKIN = {'frontL': (168, 196), 'frontR': (168, 196)}
-_b = [p for p in PARTS if p[0] == 'body'][0]
-_sa, _ca = parse(attr(P1[_b[3][0][0]], 'd')); _sb, _ = parse(attr(P2[_b[3][0][1]], 'd'))
-_, RB, TB, _ = best_fit(_sa, _sb, _ca)
-body_inv = lambda Y: (Y - TB) @ RB
+def rot_vec(v, R):
+    return (np.array(v) @ R.T)
 
-def skin_w(pts, rng):
-    y0, y1 = rng
-    u = np.clip((np.array(pts)[:, 1] - y0) / (y1 - y0), 0, 1)
-    return [round(float(1 - v*v*(3 - 2*v)), 3) for v in u]
+def paint_json(p1, p2, inv, Rl):
+    """Interpolatable paint: pose-1 geometry absolute, pose-2 geometry in the part's local frame."""
+    if p1 is None: p1 = p2
+    if p1['k'] == 's' and p2['k'] == 's':
+        return {'k': 's', 'a': p1['c'], 'b': p2['c']}
+    if p1['k'] == 's': p1 = as_gradient(p1, dict(p2, **({'p': list(inv(np.array(p2['p']).reshape(2, 2)).ravel())} if p2['k'] == 'l' else {})))
+    if p2['k'] == 's': p2 = as_gradient(p2, p1)
+    assert p1['k'] == p2['k'] and len(p1['stops']) == len(p2['stops']), 'paint kinds/stops must match'
+    r3 = lambda a: [round(float(v), 4) for v in a]
+    if p1['k'] == 'l':
+        b = inv(np.array(p2['p']).reshape(2, 2)).ravel() if p2 is not p1 else np.array(p2['p'])
+        return {'k': 'l', 'a': r3(p1['p']), 'b': r3(b), 'sa': p1['stops'], 'sb': p2['stops']}
+    m = p2['m']
+    # radial: unit-circle matrix [a b c d e f]; vectors rotate with the part, origin is a point
+    vx = rot_vec([m[0], m[1]], Rl); vy = rot_vec([m[2], m[3]], Rl); o = inv(np.array([[m[4], m[5]]]))[0]
+    return {'k': 'r', 'a': r3(p1['m']), 'b': r3([vx[0], vx[1], vy[0], vy[1], o[0], o[1]]), 'sa': p1['stops'], 'sb': p2['stops']}
+
+def num(v, default=1.0):
+    return float(v) if v is not None else default
+
+# Front legs: they rotate rigidly at the shoulder; mid-move their outlines are trimmed where they enter
+# the body silhouette (done in the morph core), so the leg reads as coming out of the body.
+FRONT_LEGS = ('frontL', 'frontR')
 
 out = {'parts': []}
 for name, parent, anchor, els in PARTS:
     i1, i2 = els[0]
-    sA, cA = parse(attr(P1[i1], 'd')); sB, cB = parse(attr(P2[i2], 'd'))
+    sA, cA = parse(D1[i1]); sB, cB = parse(D2[i2])
     if name in FORCE_FIT:
         th, R, t, err = FITS[FORCE_FIT[name]]
     else:
@@ -211,48 +297,54 @@ for name, parent, anchor, els in PARTS:
     if anchor is None:
         anchor = sample(sA).mean(0)
     A1 = np.array(anchor, float); A2 = R @ A1 + t
-    inv = lambda Y: (Y - t) @ R  # R^T (y - t) row-wise
+    inv = lambda Y: (Y - t) @ R            # pose-2 absolute → part-local (pose-1 frame)
+    Rl = R.T                                 # rotation pose-2 → local, for vectors
     part = {'name': name, 'parent': parent, 'A1': [round(float(v), 3) for v in A1],
             'A2': [round(float(v), 3) for v in A2], 'th': round(th, 5), 'err': round(float(err), 2), 'els': []}
+    shapes = {}                               # pose-2 index → element dict, for mask references
     for (j1, j2) in els:
-        sb, cb = parse(attr(P2[j2], 'd'))
-        sb_local = [inv(s) for s in sb]
-        st2 = style(P2[j2], G2, j2)
+        e1 = E1[j1] if j1 is not None else None; e2 = E2[j2]
+        sb, cb = parse(D2[j2])
+        sb_local = [inv(s_) for s_ in sb]
         if j1 is None:
             # grows in from its own midpoint
             Bm = subdivide(sb_local, max(len(sb_local), 4))
             c = sample(Bm).mean(0)
             A = [np.array([c, c, c, c]) for _ in Bm]
-            st1 = None
             closed = cb
         else:
-            sa, ca = parse(attr(P1[j1], 'd'))
+            sa, ca = parse(D1[j1])
             closed = ca and cb
             A, Bm = match(sa, sb_local, closed)
-            st1 = style(P1[j1], G1, j1)
         el = {'a': flat(A), 'b': flat(Bm), 'z': bool(closed), 'grow': j1 is None}
-        sref = st1 or st2
-        el['sw'] = 6 if attr(P2[j2], 'stroke') else 0
-        if 'fill' in st2:
-            el['fill'] = st2['fill']; el['fo'] = [ (st1 or st2).get('fo', 1), st2['fo'] ]
-        solid1 = st1 is None or st1.get('grad') is None
-        if attr(P2[j2], 'stroke') and st2.get('grad') is None and solid1:
-            el['sc'] = [(st1 or st2)['stroke'], st2['stroke']]
-        elif attr(P2[j2], 'stroke'):
-            g2 = as_grad(st2, None)
-            g1 = as_grad(st1, None) if st1 else g2
-            if g1['p'] is None: g1 = dict(g1, p=g2['p'])
-            if g2['p'] is None: g2 = dict(g2, p=g1['p'])
-            # gradient endpoints: pose1 absolute, pose2 into local frame (they ride with the part)
-            p2l = inv(np.array(g2['p']).reshape(2, 2)).ravel()
-            el['g'] = {'a': [round(float(v), 3) for v in g1['p']], 'b': [round(float(v), 3) for v in p2l],
-                       'sa': g1['stops'], 'sb': g2['stops']}
+        src1 = e1 or e2
+        f1 = transformed_paint(paint_of(src1['fill'], G1 if e1 else G2), src1['tf'])
+        f2 = transformed_paint(paint_of(e2['fill'], G2), e2['tf'])
+        s1 = transformed_paint(paint_of(src1['stroke'], G1 if e1 else G2), src1['tf'])
+        s2 = transformed_paint(paint_of(e2['stroke'], G2), e2['tf'])
+        if e1 is None:   # a grown element uses its pose-2 paint in both poses, in the local frame
+            if f1 and f1['k'] == 'l': f1 = dict(f1, p=list(inv(np.array(f1['p']).reshape(2, 2)).ravel()))
+            if s1 and s1['k'] == 'l': s1 = dict(s1, p=list(inv(np.array(s1['p']).reshape(2, 2)).ravel()))
+        if f2: el['fill'] = paint_json(f1, f2, inv, Rl)
+        if s2:
+            el['stroke'] = paint_json(s1, s2, inv, Rl)
+            el['sw'] = num(e2['stroke-width'], 1)
+        el['fo'] = [num(src1['fill-opacity']), num(e2['fill-opacity'])]
+        el['op'] = [num(src1['opacity']), num(e2['opacity'])]
+        if e2['mask']:
+            # mask = the shape of another element of this part (the nose): becomes a clip by that shape
+            ref = [k for k, (q1, q2) in enumerate(els) if D2[q2] == e2['mask']]
+            assert ref, 'mask shape not found among the part elements'
+            el['clip'] = ref[0]
+        if j1 is not None and (name, j1) in EYES:
+            el['eye'] = EYES[(name, j1)]
+            if j1 in EYE_BASE: el['eyeBase'] = 1
         if name == 'shadow':
             el['over'] = 1   # drawn over the front-leg shoulders so they shade like the chest
             # Mid-move the shadow is the head outline pushed DROP px toward the body (a crescent along the
             # side of the head that faces the body). Near the poses it blends into the original shapes.
             DROP = 9.0
-            hs_raw, _ = parse(attr(P1[12], 'd'))               # head fill, pose 1 = head-local frame
+            hs_raw, _ = parse(D1[HEAD_FILL])                   # head fill, pose 1 = head-local frame
             Hs = subdivide(hs_raw, len(A)); best = None
             for rev in (False, True):
                 HH = rev_segs(Hs) if rev else Hs
@@ -274,30 +366,31 @@ for name, parent, anchor, els in PARTS:
             el['d1'] = [round(float(x), 3) for x in (np.array(el['a']).reshape(-1, 2) - hsf - v0).ravel()]
             el['d2'] = [round(float(x), 3) for x in (np.array(el['b']).reshape(-1, 2) - hsf - v1).ravel()]
             el['hc'] = [round(float(x), 3) for x in hc1]; el['bc'] = [round(float(x), 3) for x in bc1]; el['drop'] = DROP
-        if name == 'frontL' and j1 == 11:
-            # the pose-1 extension along the body outline retracts into the shoulder point early in a pose change
-            pa = np.array(el['a']).reshape(-1, 2); base = np.array([77.077, 162.145])
-            ext = (pa[:, 1] < base[1] - 0.01) & (pa[:, 0] < 80)
-            a2 = pa.copy(); a2[ext] = base
-            el['a2'] = [round(float(v), 3) for v in a2.ravel()]
-        if name in SKIN:
-            pa = np.array(el['a']).reshape(-1, 2); pb = np.array(el['b']).reshape(-1, 2)
-            el['bb'] = [round(float(v), 3) for v in (pb @ R.T + t).ravel()]  # shoulder target: pose-2 absolute (straight path)
-            el['w'] = skin_w(pa, SKIN[name])
-            if 'g' in el:
+        pieces = [el]
+        if name in FRONT_LEGS and 'stroke' in el and not el['z']:
+            # A front-leg outline runs inner top → paw → outer top. It is split at the paw into two open lines,
+            # each with its own gradient attachment, so the gradient follows each side of the leg.
+            pa = np.array(el['a']).reshape(-1, 2); nv = (len(pa) - 1) // 3
+            kv = max(range(nv + 1), key=lambda q: pa[3 * q][1])          # lowest on-curve vertex = paw
+            def cut(arr, lo, hi): return arr[2 * lo:2 * hi + 2]
+            h1 = dict(el, a=cut(el['a'], 0, 3 * kv), b=cut(el['b'], 0, 3 * kv))
+            h2 = dict(el, a=cut(el['a'], 3 * kv, len(pa) - 1), b=cut(el['b'], 3 * kv, len(pa) - 1))
+            for h in (h1, h2):
+                h['stroke'] = json.loads(json.dumps(el['stroke']))
+            pieces = [h1, h2]
+        for el in pieces:
+            g = el.get('stroke')
+            if name in FRONT_LEGS and g and g['k'] == 'l':
                 # gradient endpoints ride on the stroke itself: nearest stroke point in each pose + offset
-                g = el['g']; P2abs = pb @ R.T + t
-                e1 = np.array(g['a']).reshape(2, 2); e2 = np.array(g['b']).reshape(2, 2) @ R.T + t
+                pa = np.array(el['a']).reshape(-1, 2); pb = np.array(el['b']).reshape(-1, 2); P2abs = pb @ R.T + t
+                q1 = np.array(g['a']).reshape(2, 2); q2 = np.array(g['b']).reshape(2, 2) @ R.T + t
                 g['att'] = []
                 for k in range(2):
-                    i1 = int(np.argmin(np.sum((pa - e1[k])**2, 1))); i2 = int(np.argmin(np.sum((P2abs - e2[k])**2, 1)))
-                    g['att'].append([i1, i2, *[round(float(v), 3) for v in e1[k] - pa[i1]], *[round(float(v), 3) for v in e2[k] - P2abs[i2]]])
-                # which stop sits at the shoulder (higher skin weight) — it stays dissolved in the body mid-move
-                w = el['w']
-                g['sh'] = 0 if w[g['att'][0][0]] + w[g['att'][0][1]] > w[g['att'][1][0]] + w[g['att'][1][1]] else 1
-        part['els'].append(el)
+                    k1 = int(np.argmin(np.sum((pa - q1[k])**2, 1))); k2 = int(np.argmin(np.sum((P2abs - q2[k])**2, 1)))
+                    g['att'].append([k1, k2, *[round(float(v), 3) for v in q1[k] - pa[k1]], *[round(float(v), 3) for v in q2[k] - P2abs[k2]]])
+            part['els'].append(el)
     out['parts'].append(part)
-    print(f"{name:7s} th={math.degrees(th):7.1f}  err={err:7.1f}  A1={A1.round(1)} A2={A2.round(1)}")
+    print(f"{name:7s} th={math.degrees(th):7.1f}  err={err:7.2f}  A1={A1.round(1)} A2={A2.round(1)}")
 
 json.dump(out, open(OUT, 'w'), separators=(',', ':'))
 print('bytes', len(json.dumps(out, separators=(',', ':'))))

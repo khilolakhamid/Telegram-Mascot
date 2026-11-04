@@ -3,8 +3,9 @@
  *
  * Interpolates every element of the dog between pose 1 (sitting) and pose 2 (playful bow):
  * each body part moves along a rigid transform (rotation + carried anchor) while its contour
- * morphs between matched cubic-Bézier point sets. Shoulders are skinned to the body, the
- * gradient strokes stay attached to their ends, and the head shadow is cast by the head.
+ * morphs between matched cubic-Bézier point sets. Fills and strokes may be solid colours or
+ * linear/radial gradients; their geometry rides with the part. Front legs rotate rigidly at the
+ * shoulder with their full outlines; the head shadow is cast by the head.
  *
  * Input data (dogMorphData.json) is generated from the two SVGs by tools/build_morph_data.py.
  */
@@ -73,19 +74,10 @@ function solve(rig, g) {
 }
 
 const lerp = (a, b, t) => a + (b - a) * t;
-const FILL = [249, 249, 249];
 const f = v => Math.round(v * 100) / 100;
 
-// Point i of a part: carried by the part, or — for skinned shoulder points — blended with the body.
-function pt(a, b, bb, w, i, T, B) {
-  let [x, y] = T.M(lerp(a[i], b[i], T.t), lerp(a[i + 1], b[i + 1], T.t));
-  const k = bb ? w[i >> 1] : 0;
-  if (k > 0) {
-    const u = lerp(a[i], bb[i], T.t), v = lerp(a[i + 1], bb[i + 1], T.t);
-    x += (u - x) * k; y += (v - y) * k;
-  }
-  return [x, y];
-}
+// Point i of an element, carried by its part.
+const pt = (a, b, i, T) => T.M(lerp(a[i], b[i], T.t), lerp(a[i + 1], b[i + 1], T.t));
 
 // Shadow under the head: head outline pushed toward the body mid-move, original shapes at the poses.
 function shadowD(el, T, B, P) {
@@ -107,77 +99,67 @@ function shadowD(el, T, B, P) {
 
 function pathD(el, T, B, P) {
   if (el.hs) return shadowD(el, T, B, P);
-  let a = el.a;
-  if (el.a2) {   // pose-1 detail that retracts during the first part of a pose change
-    const r = smooth(T.t / 0.3);
-    a = r > 0 ? el.a.map((v, i) => lerp(v, el.a2[i], r)) : el.a;
-  }
+  const a = el.a;
+  const Q = [];
+  for (let i = 0; i < a.length; i += 2) Q.push(pt(a, el.b, i, T));
+  if (P) Q.forEach(q => P.push(q[0], q[1]));
   let d = '';
-  for (let i = 0, k = 0; i < a.length; i += 2, k++) {
-    const [x, y] = pt(a, el.b, el.bb, el.w, i, T, B);
-    if (P) P.push(x, y);
-    d += (k === 0 ? 'M' : (k % 3 === 1 ? 'C' : ' ')) + f(x) + ' ' + f(y);
-  }
+  Q.forEach(([x, y], k) => { d += (k === 0 ? 'M' : (k % 3 === 1 ? 'C' : ' ')) + f(x) + ' ' + f(y); });
   return el.z ? d + 'Z' : d;
-}
-
-function convexHull(pts) {
-  pts = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  if (pts.length < 3) return pts;
-  const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-  const lo = [], up = [];
-  for (const p of pts) { while (lo.length > 1 && cr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
-  for (const p of pts.slice().reverse()) { while (up.length > 1 && cr(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop(); up.push(p); }
-  return lo.slice(0, -1).concat(up.slice(0, -1));
 }
 
 function color(c1, c2, t) {
   return 'rgb(' + [0, 1, 2].map(i => Math.round(lerp(c1[i], c2[i], t))).join(',') + ')';
 }
 
+// Paint at local progress t: solid colour, linear gradient (endpoints) or radial gradient (unit-circle matrix).
+// Geometry: pose 1 absolute, pose 2 in the part's local frame → interpolated, then carried by the part.
+function paintAt(pn, tr, t, P) {
+  if (pn.k === 's') return { type: 'solid', c: color(pn.a, pn.b, t) };
+  const stops = pn.sa.map((s, i) => ({
+    c: color(s.c, pn.sb[i].c, t), o: lerp(s.o, pn.sb[i].o, t), off: lerp(s.off, pn.sb[i].off, t)
+  }));
+  if (pn.k === 'l') {
+    const p = [];
+    if (pn.att) {
+      // endpoints attached to the stroke: vertex in pose 1 / pose 2 + offset, blended
+      pn.att.forEach(([i1, i2, ox1, oy1, ox2, oy2]) => {
+        const x1 = P[2 * i1] + ox1, y1 = P[2 * i1 + 1] + oy1, x2 = P[2 * i2] + ox2, y2 = P[2 * i2 + 1] + oy2;
+        p.push(lerp(x1, x2, t), lerp(y1, y2, t));
+      });
+    } else for (let i = 0; i < 4; i += 2) p.push(...tr.M(lerp(pn.a[i], pn.b[i], t), lerp(pn.a[i + 1], pn.b[i + 1], t)));
+    return { type: 'lin', p, stops };
+  }
+  // radial: rotate the two axis vectors with the part, carry the centre as a point
+  const L = pn.a.map((v, i) => lerp(v, pn.b[i], t));
+  const c = Math.cos(tr.ang), s = Math.sin(tr.ang);
+  const [ox, oy] = tr.M(L[4], L[5]);
+  return { type: 'rad', m: [c * L[0] - s * L[1], s * L[0] + c * L[1], c * L[2] - s * L[3], s * L[2] + c * L[3], ox, oy], stops };
+}
+
 // Returns a list of per-element render states for progress g in [0,1]
 function frame(rig, g) {
   const T = solve(rig, g), out = [];
   rig.DATA.parts.forEach(p => {
-    const tr = T[p.name];
+    const tr = T[p.name], first = out.length;
     p.els.forEach(el => {
       const t = tr.t, P = [], o = { part: p.name, layer: el.over ? 'bodyOver' : p.name, d: pathD(el, tr, T.body, P) };
-      o.opacity = el.grow ? smooth((t - 0.35) / 0.55) : 1;
-      if (el.fill) { o.fill = 'rgb(' + el.fill.join(',') + ')'; o.fo = lerp(el.fo[0], el.fo[1], t); }
-      if (el.sc) o.stroke = color(el.sc[0], el.sc[1], t);
-      if (el.g) {
-        const g1 = el.g, pts = [];
-        if (g1.att) {
-          // endpoints attached to the stroke: vertex in pose 1 / pose 2 + offset, blended
-          g1.att.forEach(([i1, i2, ox1, oy1, ox2, oy2]) => {
-            const x1 = P[2 * i1] + ox1, y1 = P[2 * i1 + 1] + oy1, x2 = P[2 * i2] + ox2, y2 = P[2 * i2 + 1] + oy2;
-            pts.push(lerp(x1, x2, t), lerp(y1, y2, t));
-          });
-        } else for (let i = 0; i < 4; i += 2) pts.push(...tr.M(lerp(g1.a[i], g1.b[i], t), lerp(g1.a[i + 1], g1.b[i + 1], t)));
-        const bump = g1.att ? 0.85 * Math.sin(Math.PI * t) : 0;   // 0 at both poses
-        o.grad = { p: pts, stops: g1.sa.map((s, i) => {
-          const c = s.c.map((v, k) => lerp(v, g1.sb[i].c[k], t));
-          const fade = i === g1.sh ? bump : 0;               // shoulder end dissolves into the body colour
-          return { c: color(c, FILL, fade), o: lerp(lerp(s.o, g1.sb[i].o, t), 1, fade), off: lerp(s.off, g1.sb[i].off, t) };
-        }) };
-      }
-      o.P = P; o.w = el.w;
+      o.opacity = (el.grow ? smooth((t - 0.35) / 0.55) : 1) * lerp(el.op[0], el.op[1], t);
+      o.fo = lerp(el.fo[0], el.fo[1], t);
+      if (el.fill) o.fill = paintAt(el.fill, tr, t, P);
+      if (el.stroke) { o.stroke = paintAt(el.stroke, tr, t, P); o.sw = el.sw; }
+      if (el.eye) { o.eye = el.eye; o.eyeBase = !!el.eyeBase; }
+      if (el.clip !== undefined) o.clipOf = first + el.clip;
+      o.P = P;
       out.push(o);
     });
   });
-  // Shoulder bridge: body-coloured fill spanning the tops of both front legs, under the legs.
-  // It hides the chest contour that would otherwise peek between the shoulders mid-move; invisible in both poses.
-  const sh = [];
-  out.forEach(e => { if ((e.part === 'frontL' || e.part === 'frontR') && e.fill && e.w) e.P.forEach((v, i) => { if (i % 2 === 0 && e.w[i >> 1] > 0.2) sh.push([v, e.P[i + 1]]); }); });
-  const hull = convexHull(sh), tb = T.frontR.t;
-  out.push({ part: 'bridge', layer: 'bridge', fill: 'rgb(249,249,249)', fo: 1, opacity: Math.min(1, 3 * Math.sin(Math.PI * tb)),
-             d: hull.length > 2 ? 'M' + hull.map(p => f(p[0]) + ' ' + f(p[1])).join('L') + 'Z' : 'M0 0' });
-  // render order: the bridge goes right after the front legs
-  const over = out.filter(e => e.layer === 'bodyOver'), bridge = out.filter(e => e.layer === 'bridge');
-  const rest = out.filter(e => e.layer !== 'bodyOver' && e.layer !== 'bridge');
-  rest.splice(rest.map(e => e.part).indexOf('frontL'), 0, ...bridge);
+  out.forEach(o => { if (o.clipOf !== undefined) { o.clipD = out[o.clipOf].d; delete o.clipOf; } });
+  // render order: the head shadow goes right after the front legs
+  const over = out.filter(e => e.layer === 'bodyOver');
+  const rest = out.filter(e => e.layer !== 'bodyOver');
   rest.splice(rest.map(e => e.part).lastIndexOf('frontR') + 1, 0, ...over);
-  out.forEach(e => { if (e.layer !== 'bodyOver') delete e.P; delete e.w; });
+  out.forEach(e => { if (e.layer !== 'bodyOver') delete e.P; });
   return { els: rest, T };
 }
 

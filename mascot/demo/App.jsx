@@ -11,10 +11,11 @@ export default function App() {
   const [playing, setPlaying] = useState(true);
   const [info, setInfo] = useState({ time: 0, blockIndex: 0, stage: 'pose 1' });
   const [size, setSize] = useState(240);
+  const [bg, setBg] = useState('white');
 
   return (
     <main className="player">
-      <div className="stage" style={{ width: size, height: size }}>
+      <div className={`stage bg-${bg}`} style={{ width: size, height: size }}>
         <DogMascot ref={dog} size={size} playing={playing} onFrame={setInfo} />
       </div>
 
@@ -39,6 +40,12 @@ export default function App() {
 
       <div className="meta">
         {info.time.toFixed(2)} / 12.00 s · блок {info.blockIndex + 1}/4 ({BLOCK_NAMES[info.blockIndex]}) · {STAGE_NAMES[info.stage] || info.stage}
+      </div>
+
+      <div className="row sizes" role="group" aria-label="Фон под компонентом">
+        {[['white', 'Белый'], ['dark', 'Тёмный'], ['color', 'Цветной'], ['checker', 'Прозрачность']].map(([k, label]) => (
+          <button key={k} type="button" className={bg === k ? 'primary' : ''} onClick={() => setBg(k)}>{label}</button>
+        ))}
       </div>
 
       <div className="row sizes" role="group" aria-label="Размер">
