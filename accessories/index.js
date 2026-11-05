@@ -15,6 +15,7 @@ export { Glasses, createGlasses, createGlassesMotion, GLASSES_PLACEMENT, GLASSES
 // Mouth accessories
 export { Carrot, createCarrot, createCarrotMotion, CARROT_PLACEMENT, CARROT_SVG, CARROT_MOTION } from './mouth/carrot/index.ts';
 export { Ball, createBall, createBallMotion, BALL_PLACEMENT, BALL_SVG, BALL_MOTION } from './mouth/ball/index.ts';
+export { Bone, createBone, createBoneMotion, BONE_PLACEMENT, BONE_SVG, BONE_MOTION } from './mouth/bone/index.ts';
 
 // Shared engine for building new accessories
 export { createHeadAccessory } from './core/headAccessory.js';

@@ -6,6 +6,7 @@ import { Bow } from '../head/bow';
 import { Ball } from '../mouth/ball';
 import { Duck } from '../head/duck';
 import { Glasses } from '../eyes/glasses';
+import { Bone } from '../mouth/bone';
 
 // Try-on page: the mascot dog (from ../mascot, unchanged) with accessories put on it.
 // Play/Pause, the full 12-second sequence on a slider, each accessory on/off, backgrounds and sizes.
@@ -27,7 +28,8 @@ export default function App() {
   const [duck, setDuck] = useState(false);
   const [ball, setBall] = useState(false);
   const [bow, setBow] = useState(false);
-  const [carrot, setCarrot] = useState(true);
+  const [carrot, setCarrot] = useState(false);
+  const [bone, setBone] = useState(true);
   const [hat, setHat] = useState(false);
   const [info, setInfo] = useState({ time: 0, blockIndex: 0, stage: 'pose 1' });
   const [size, setSize] = useState(240);
@@ -39,7 +41,7 @@ export default function App() {
 
   return (
     <main className="player">
-      <h1>Примерка: морковка</h1>
+      <h1>Примерка: косточка</h1>
       <div
         className={`stage bg-${bg}`}
         style={{
@@ -56,7 +58,9 @@ export default function App() {
               <Glasses enabled={glasses}>
                 <Carrot enabled={carrot}>
                   <Ball enabled={ball}>
-                    <DogMascot ref={dog} size={size} playing={playing} onFrame={setInfo} />
+                    <Bone enabled={bone}>
+                      <DogMascot ref={dog} size={size} playing={playing} onFrame={setInfo} />
+                    </Bone>
                   </Ball>
                 </Carrot>
               </Glasses>
@@ -75,6 +79,9 @@ export default function App() {
       </div>
 
       <div className="row" role="group" aria-label="Аксессуары">
+        <button type="button" className={bone ? 'primary' : ''} aria-pressed={bone} onClick={() => setBone(v => !v)}>
+          🦴 Косточка: {bone ? 'вкл' : 'выкл'}
+        </button>
         <button type="button" className={glasses ? 'primary' : ''} aria-pressed={glasses} onClick={() => setGlasses(v => !v)}>
           🕶️ Очки: {glasses ? 'вкл' : 'выкл'}
         </button>

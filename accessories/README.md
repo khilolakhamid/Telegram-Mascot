@@ -12,6 +12,7 @@
 | Очки | [`eyes/glasses/`](eyes/glasses/) | `Glasses` |
 | Морковка во рту | [`mouth/carrot/`](mouth/carrot/) | `Carrot` |
 | Мячик во рту | [`mouth/ball/`](mouth/ball/) | `Ball` |
+| Косточка во рту | [`mouth/bone/`](mouth/bone/) | `Bone` |
 
 ## Подключение
 
@@ -25,7 +26,7 @@ import { ChristmasHat } from '../accessories/head/christmas-hat';
 ```
 
 Несколько аксессуаров сразу — вложением, внешним идёт `ChristmasHat`
-(`Duck`, `Bow`, `Glasses`, `Carrot` и `Ball` можно вкладывать друг в друга):
+(`Duck`, `Bow`, `Glasses`, `Carrot`, `Ball` и `Bone` можно вкладывать друг в друга):
 
 ```tsx
 import { Carrot } from '../accessories/mouth/carrot';
@@ -67,7 +68,8 @@ accessories/
 │   └── glasses/               очки (Glasses.tsx, SVG, анимации)
 ├── mouth/                     аксессуары для рта
 │   ├── carrot/                морковка (Carrot.tsx, SVG, анимации)
-│   └── ball/                  мячик (Ball.tsx, SVG, анимации)
+│   ├── ball/                  мячик (Ball.tsx, SVG, анимации)
+│   └── bone/                  косточка (Bone.tsx, SVG, анимации)
 ├── core/                      общий движок аксессуаров
 │   ├── headAccessory.js       крепит SVG к голове собачки (над головой или под ней) и ведёт за головой
 │   ├── inertia.js             инерция (пружины от движения головы)
@@ -101,7 +103,8 @@ createHeadAccessory(svg, {
 Значения `pose1` и `pose2` выдаёт `tools/fit_placement.py` (нужны `rsvg-convert` и Python с
 numpy, scipy, opencv-python). Последний аргумент — по каким цветам искать: `hat` (красный и
 серо-голубой), `carrot` (оранжевый и зелёный), `bow` (розовый), `ball`
-(жёлто-зелёный), `duck` (жёлтый и оранжевый) или `glasses` (салатовый и зелёный).
+(жёлто-зелёный), `duck` (жёлтый и оранжевый), `glasses` (салатовый и зелёный) или `bone`
+(кремовый и тёмно-коричневый).
 Если аксессуар закрывает глаза собачки, скриншот совмещается с ней по контуру и носу:
 
 ```bash
