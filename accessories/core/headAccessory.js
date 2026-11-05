@@ -52,6 +52,26 @@ const partMatrix = T => {
   return [ax - e, ay - f, cx - e, cy - f, e, f];
 };
 
+let instanceCount = 0;
+const URL_ATTRS = ['fill', 'stroke', 'clip-path', 'mask', 'filter', 'marker-start', 'marker-mid', 'marker-end'];
+/** Gives every id inside `root` a unique prefix and updates url(#…) / href references to it. */
+function uniquifyIds(root, prefix) {
+  const withId = root.querySelectorAll('[id]');
+  if (!withId.length) return;
+  const map = {};
+  withId.forEach(el => { map[el.id] = `${prefix}-${el.id}`; el.id = map[el.id]; });
+  root.querySelectorAll('*').forEach(el => {
+    URL_ATTRS.forEach(a => {
+      const v = el.getAttribute(a);
+      if (v && v.includes('url(#')) el.setAttribute(a, v.replace(/url\(#([^)]+)\)/g, (m, id) => (map[id] ? `url(#${map[id]})` : m)));
+    });
+    ['href', 'xlink:href'].forEach(a => {
+      const v = el.getAttribute(a);
+      if (v && v[0] === '#' && map[v.slice(1)]) el.setAttribute(a, '#' + map[v.slice(1)]);
+    });
+  });
+}
+
 /** Parses accessory SVG markup; returns its child nodes and root presentation attributes. */
 function parseMarkup(markup, doc) {
   const Parser = doc.defaultView && doc.defaultView.DOMParser;
@@ -69,13 +89,16 @@ function parseMarkup(markup, doc) {
  * @param {object} opts.placement  see header
  * @param {string} [opts.name='accessory']  value of data-accessory on the inserted group
  * @param {string} [opts.part='head']  dog part whose pose transform the accessory follows
+ * @param {string} [opts.layer='over-head']  'over-head': drawn over the head and ears (hats);
+ *                                  'under-head': drawn under the head and ears, over the body and
+ *                                  legs (things held in the mouth: the muzzle overlaps them)
  * @param {number} [opts.pose=0]  initial pose progress
  * @param {number} [opts.time]    initial sequence time (for secondary motion)
  * @param {function} [opts.motion]  ({ elements, placementAt, duration, cfg }) → { apply(info) }:
  *                                  secondary motion of the accessory's own shapes
  */
 export function createHeadAccessory(svg, opts) {
-  const { markup, placement, name = 'accessory', part = 'head' } = opts;
+  const { markup, placement, name = 'accessory', part = 'head', layer = 'over-head' } = opts;
   const doc = svg.ownerDocument;
   const headRig = svg.querySelector('[data-part="head-rig"]');
   if (!headRig) throw new Error('headAccessory: the dog is not drawn in this <svg> yet');
@@ -105,7 +128,9 @@ export function createHeadAccessory(svg, opts) {
   inner.setAttribute('fill', fill || 'none');
   nodes.forEach(n => inner.appendChild(doc.importNode(n, true)));
   outer.appendChild(inner);
-  headRig.appendChild(outer);   // last in the head rig → drawn over the head and ears
+  uniquifyIds(outer, `${name}-${++instanceCount}`);   // several dogs on one page: no id clashes
+  if (layer === 'under-head') headRig.insertBefore(outer, headRig.firstChild);   // under head and ears
+  else headRig.appendChild(outer);   // last in the head rig → drawn over the head and ears
 
   // Accessory → dog matrix for pose progress g (follows the head's pose transform; no head turn)
   function poseMatrix(pose) {

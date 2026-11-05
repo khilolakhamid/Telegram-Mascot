@@ -7,6 +7,7 @@
 | Аксессуар | Папка | Компонент |
 |---|---|---|
 | Новогодняя шапочка | [`head/christmas-hat/`](head/christmas-hat/) | `ChristmasHat` |
+| Морковка во рту | [`mouth/carrot/`](mouth/carrot/) | `Carrot` |
 
 ## Подключение
 
@@ -16,6 +17,18 @@ import { ChristmasHat } from '../accessories/head/christmas-hat';
 
 <ChristmasHat>
   <DogMascot size={240} />
+</ChristmasHat>
+```
+
+Несколько аксессуаров сразу — вложением, внешним идёт `ChristmasHat`:
+
+```tsx
+import { Carrot } from '../accessories/mouth/carrot';
+
+<ChristmasHat>
+  <Carrot>
+    <DogMascot size={240} />
+  </Carrot>
 </ChristmasHat>
 ```
 
@@ -32,7 +45,7 @@ npm run dev       # http://localhost:5173
 ```
 
 На странице: Play / Pause, ползунок по всему 12-секундному циклу, быстрые переходы
-(поворот головы, приседание, поза 2, возвращение), включение и выключение шапочки,
+(поворот головы, приседание, поза 2, возвращение), включение и выключение морковки и шапочки,
 фоны и размеры (240, 120, 64 px).
 
 ## Состав
@@ -41,9 +54,11 @@ npm run dev       # http://localhost:5173
 accessories/
 ├── head/                      аксессуары на голову
 │   └── christmas-hat/         новогодняя шапочка (ChristmasHat.tsx, SVG, анимации)
+├── mouth/                     аксессуары для рта
+│   └── carrot/                морковка (Carrot.tsx, SVG, анимации)
 ├── core/                      общий движок аксессуаров
-│   ├── headAccessory.js       крепит SVG к голове собачки и ведёт его за головой
-│   ├── inertia.js             инерция ткани (пружины от движения головы)
+│   ├── headAccessory.js       крепит SVG к голове собачки (над головой или под ней) и ведёт за головой
+│   ├── inertia.js             инерция (пружины от движения головы)
 │   └── pathDeform.js          деформация контуров SVG по точкам
 ├── tools/
 │   └── fit_placement.py       замер посадки по картинкам-референсам
@@ -66,9 +81,12 @@ createHeadAccessory(svg, {
 });
 ```
 
+Аксессуар, который должен лежать под головой и ушками (как то, что во рту), — с `layer: 'under-head'`.
+
 Значения `pose1` и `pose2` выдаёт `tools/fit_placement.py` (нужны `rsvg-convert` и Python с
-numpy, scipy, opencv-python):
+numpy, scipy, opencv-python). Последний аргумент — по каким цветам искать: `hat` (красный и
+серо-голубой) или `carrot` (оранжевый и зелёный):
 
 ```bash
-python3 accessories/tools/fit_placement.py bow.svg mascot/assets/dog-pose-1.svg reference-pose-1.png
+python3 accessories/tools/fit_placement.py bow.svg mascot/assets/dog-pose-1.svg reference-pose-1.png hat
 ```

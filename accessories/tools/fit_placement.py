@@ -2,18 +2,20 @@
 """
 Measures where an accessory sits on the dog from reference images.
 
-    python3 accessories/tools/fit_placement.py ACCESSORY.svg POSE.svg REFERENCE.png
+    python3 accessories/tools/fit_placement.py ACCESSORY.svg POSE.svg REFERENCE.png [COLOURS]
 
 ACCESSORY.svg  the accessory (e.g. accessories/head/christmas-hat/assets/christmas-hat.svg)
 POSE.svg       the dog pose shown on the reference (mascot/assets/dog-pose-1.svg or -2.svg)
 REFERENCE.png  screenshot of the dog wearing the accessory (any zoom, any position)
+COLOURS        which colour masks to fit by: hat (red cloth + blue-grey outline, default)
+               or carrot (orange root + green leaves)
 
 Prints { x, y, rotate } — the accessory's SVG origin in the dog's 240×240 frame and its rotation —
 ready for the `placement.pose1` / `placement.pose2` of an accessory.
 
 How: the dog's eyes and nose (the three black shapes) register the screenshot to the dog's
-coordinates; then the accessory is fitted to the screenshot by its colour masks (red cloth,
-blue-grey outline) with a scale + rotation + shift search.
+coordinates; then the accessory is fitted to the screenshot by two colour masks (see COLOURS)
+with a scale + rotation + shift search.
 Needs: rsvg-convert, Python 3 with numpy, scipy, opencv-python.
 """
 import subprocess, sys, tempfile, os
@@ -50,23 +52,27 @@ def similarity(src, dst):
     return np.hstack([s * R, (md - s * R @ ms)[:, None]])
 
 
-def masks(img, alpha=None):
+def masks(img, alpha=None, colours='hat'):
     b, g, r = [img[..., i].astype(int) for i in range(3)]
-    red = (r > 110) & (g < 100) & (b < 100)
-    blue = (b - r > 12) & (b > 120) & (b < 210)
+    if colours == 'carrot':
+        one = (r > 190) & (g > 70) & (g < 215) & (b < 90) & (r - g > 40)      # orange root
+        two = (g > 90) & (g - r > 15) & (g - b > 60)                          # green leaves
+    else:
+        one = (r > 110) & (g < 100) & (b < 100)                               # red cloth
+        two = (b - r > 12) & (b > 120) & (b < 210)                            # blue-grey outline
     if alpha is not None:
-        red &= alpha > 128; blue &= alpha > 128
-    return red.astype(np.float32), blue.astype(np.float32)
+        one &= alpha > 128; two &= alpha > 128
+    return one.astype(np.float32), two.astype(np.float32)
 
 
-def main(acc_svg, pose_svg, ref_png):
+def main(acc_svg, pose_svg, ref_png, colours='hat'):
     ref = cv2.imread(ref_png)
     dog = render(pose_svg, '#1f1f1f')
     to_dog = similarity(dark_features(ref), dark_features(dog) / Z)   # screenshot px → dog units
 
     acc = render(acc_svg)
-    ar, ab = masks(acc[..., :3], acc[..., 3])
-    tr, tb = masks(ref)
+    ar, ab = masks(acc[..., :3], acc[..., 3], colours)
+    tr, tb = masks(ref, None, colours)
     H, W = tr.shape
     TR, TB = (cv2.GaussianBlur(m, (0, 0), 3) for m in (tr, tb))
     ys, xs = np.nonzero(np.maximum(tr, tb))
@@ -103,6 +109,6 @@ def main(acc_svg, pose_svg, ref_png):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
+    if len(sys.argv) not in (4, 5):
         sys.exit(__doc__)
     main(*sys.argv[1:])

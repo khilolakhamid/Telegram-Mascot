@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react';
 import { DogMascot } from '../../mascot/index.js';
 import { ChristmasHat } from '../head/christmas-hat';
+import { Carrot } from '../mouth/carrot';
 
-// Try-on page: the mascot dog (from ../mascot, unchanged) with the Christmas hat put on top.
-// Play/Pause, the full 12-second sequence on a slider, hat on/off, backgrounds and sizes.
+// Try-on page: the mascot dog (from ../mascot, unchanged) with accessories put on it.
+// Play/Pause, the full 12-second sequence on a slider, carrot and hat on/off, backgrounds and sizes.
 const BLOCK_NAMES = ['поза 1', 'поза 1', 'поза 1', 'игровая поза'];
 const STAGE_NAMES = { 'pose 1': 'поза 1', crouch: 'приседание', 'pose 2': 'поза 2', return: 'возвращение' };
 const MARKS = [
@@ -13,7 +14,8 @@ const MARKS = [
 export default function App() {
   const dog = useRef(null);
   const [playing, setPlaying] = useState(true);
-  const [hat, setHat] = useState(true);
+  const [carrot, setCarrot] = useState(true);
+  const [hat, setHat] = useState(false);
   const [info, setInfo] = useState({ time: 0, blockIndex: 0, stage: 'pose 1' });
   const [size, setSize] = useState(240);
   const [bg, setBg] = useState('white');
@@ -22,10 +24,12 @@ export default function App() {
 
   return (
     <main className="player">
-      <h1>Примерка: шапочка</h1>
+      <h1>Примерка: морковка</h1>
       <div className={`stage bg-${bg}`} style={{ width: size, height: size }}>
         <ChristmasHat enabled={hat}>
-          <DogMascot ref={dog} size={size} playing={playing} onFrame={setInfo} />
+          <Carrot enabled={carrot}>
+            <DogMascot ref={dog} size={size} playing={playing} onFrame={setInfo} />
+          </Carrot>
         </ChristmasHat>
       </div>
 
@@ -35,6 +39,12 @@ export default function App() {
         </button>
         <button type="button" className={playing ? 'primary' : ''} disabled={!playing} onClick={() => setPlaying(false)}>
           ❚❚ Pause
+        </button>
+      </div>
+
+      <div className="row" role="group" aria-label="Аксессуары">
+        <button type="button" className={carrot ? 'primary' : ''} aria-pressed={carrot} onClick={() => setCarrot(c => !c)}>
+          🥕 Морковка: {carrot ? 'вкл' : 'выкл'}
         </button>
         <button type="button" className={hat ? 'primary' : ''} aria-pressed={hat} onClick={() => setHat(h => !h)}>
           🎅 Шапочка: {hat ? 'вкл' : 'выкл'}

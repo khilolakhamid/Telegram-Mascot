@@ -12,5 +12,5 @@
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["head", "core", "demo", "index.js", "vite-env.d.ts"]
+  "include": ["head", "mouth", "core", "demo", "index.js", "vite-env.d.ts"]
 }

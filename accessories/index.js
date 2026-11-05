@@ -7,6 +7,9 @@ export {
   CHRISTMAS_HAT_PLACEMENT, CHRISTMAS_HAT_SVG, CHRISTMAS_HAT_MOTION
 } from './head/christmas-hat/index.ts';
 
+// Mouth accessories
+export { Carrot, createCarrot, CARROT_PLACEMENT, CARROT_SVG } from './mouth/carrot/index.ts';
+
 // Shared engine for building new accessories
 export { createHeadAccessory } from './core/headAccessory.js';
 export { buildInertia } from './core/inertia.js';

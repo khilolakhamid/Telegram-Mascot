@@ -13,11 +13,16 @@
  *   anchor            point (accessory units) whose acceleration drives the translation spring
  *   translation       { omega, zeta }  spring of the relative offset (returned in accessory units)
  *   segment, settle   block length (s) and the time (s) at a block's end in which leftover motion settles
+ *   smoothing         (s) softens the head's acceleration before it drives the springs (a one-sided
+ *                     Gaussian over the past, so the accessory never reacts before the head moves);
+ *                     single-frame spikes at stage joins then give no kick; 0 = off
+ *   periodic          true: no blocks — the whole sequence is simulated as one endless loop (run three
+ *                     times, the last run kept), so motion started near the end carries on past 12 s → 0 s
  *   springs           { name: { omega, zeta, axis: [x, y], length } } angular springs (rad):
  *                     driven by the head's angular acceleration and by the anchor's acceleration
  *                     across `axis` (the rest direction of that piece, accessory units) / `length`.
  */
-export function buildInertia({ placementAt, duration, anchor, translation, springs, segment = duration, settle = 0.35, rate = 240 }) {
+export function buildInertia({ placementAt, duration, anchor, translation, springs, segment = duration, settle = 0.35, periodic = false, smoothing = 0, rate = 240 }) {
   const N = Math.round(duration * rate), dt = 1 / rate;
 
   // Drive signals sampled over one loop (periodic): anchor position and accessory angle, dog frame
@@ -42,6 +47,20 @@ export function buildInertia({ placementAt, duration, anchor, translation, sprin
     al[i] = (unwrap(th[b] - th[i]) - unwrap(th[i] - th[a])) / (dt * dt);
   }
 
+  if (smoothing > 0) {   // one-sided (past-only) Gaussian blur of the drive signals, circular
+    const sg = smoothing * rate, rad = Math.ceil(sg * 3), kern = [];
+    for (let k = 0; k <= rad; k++) kern.push(Math.exp(-0.5 * (k / sg) ** 2));
+    const ks = kern.reduce((a, b) => a + b, 0);
+    for (const arr of [ax, ay, al]) {
+      const src = Float64Array.from(arr);
+      for (let i = 0; i < N; i++) {
+        let v = 0;
+        for (let k = 0; k <= rad; k++) v += src[idx(i - k)] * kern[k];
+        arr[i] = v / ks;
+      }
+    }
+  }
+
   const names = Object.keys(springs);
   const out = { x: new Float32Array(N), y: new Float32Array(N) };
   names.forEach(n => (out[n] = new Float32Array(N)));
@@ -51,12 +70,13 @@ export function buildInertia({ placementAt, duration, anchor, translation, sprin
   // `settle` seconds (value and speed both reach 0). So every block begins and ends with the
   // accessory exactly at its rest shape: blocks join seamlessly in any order and can be exported
   // one by one (Telegram TGS).
-  const sub = 4, h = dt / sub, seg = Math.round(segment * rate), tail = Math.round(settle * rate);
+  const sub = 4, h = dt / sub, seg = periodic ? N : Math.round(segment * rate), tail = Math.round(settle * rate);
   for (let s0 = 0; s0 < N; s0 += seg) {
     const s1 = Math.min(N, s0 + seg);
     let tx = 0, ty = 0, tvx = 0, tvy = 0;
     const st = names.map(() => ({ a: 0, v: 0 }));
     const vel = { x: 0, y: 0 }; names.forEach(n => (vel[n] = 0));
+    for (let run = 0, runs = periodic ? 3 : 1; run < runs; run++)
     for (let i = s0; i < s1; i++) {
       for (let k = 0; k < sub; k++) {
         const { omega: w, zeta: z } = translation;
@@ -73,6 +93,7 @@ export function buildInertia({ placementAt, duration, anchor, translation, sprin
       out.x[i] = tx; out.y[i] = ty; vel.x = tvx; vel.y = tvy;
       names.forEach((n, j) => { out[n][i] = st[j].a; vel[n] = st[j].v; });
     }
+    if (periodic) continue;   // the last run is the steady loop: it ends where it starts
     // ease out what is left: subtract  w(t)·(x_end + v_end·(t − t_end)),  w = smoothstep over the tail
     const iEnd = s1 - 1, tEnd = iEnd * dt;
     for (const key of ['x', 'y', ...names]) {
