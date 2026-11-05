@@ -16,6 +16,8 @@
  * `placement` is measured on the reference images:
  *   pose1: { x, y, rotate }   where the accessory's SVG origin (0,0) sits in the dog's 240×240 frame
  *   pose2: { x, y, rotate }   in pose 1 and pose 2; `rotate` (degrees) turns it around that origin.
+ *                             Optional `scale` in a pose: the size in that pose, when the reference
+ *                             shows it different (eased from one to the other together with the head).
  *   scale: number             accessory units → dog units (1 = the SVG's own size)
  *   pivot: [x, y]             (optional) point in pose-1 dog coords around which the small pose-2
  *                             fine-tuning turns; defaults to the accessory's centre.
@@ -42,8 +44,8 @@ const place = ({ x, y, rotate = 0 }, s = 1) => {
   const c = Math.cos(rotate * RAD) * s, n = Math.sin(rotate * RAD) * s;
   return [c, n, -n, c, x, y];
 };
-const rotAbout = (deg, px, py) => {
-  const c = Math.cos(deg * RAD), n = Math.sin(deg * RAD);
+const rotAbout = (deg, px, py, k = 1) => {   // rotation (and scale k) about (px, py)
+  const c = Math.cos(deg * RAD) * k, n = Math.sin(deg * RAD) * k;
   return [c, n, -n, c, px - c * px + n * py, py - n * px - c * py];
 };
 // Pose transform of a dog part as a matrix (from the rig's M(x, y) function)
@@ -108,17 +110,19 @@ export function createHeadAccessory(svg, opts) {
   const { nodes, viewBox, fill } = parseMarkup(markup, doc);
 
   // Where the accessory sits in pose 1 (H1) and pose 2 (H2), in dog coordinates.
-  const H1 = place(placement.pose1, s);
-  const H2 = place(placement.pose2, s);
+  const s1 = placement.pose1.scale ?? s, s2 = placement.pose2.scale ?? s;
+  const H1 = place(placement.pose1, s1);
+  const H2 = place(placement.pose2, s2);
   // The head's own pose-2 transform; whatever the reference adds on top of it is a small fine-tuning
   // (the head contour itself morphs a little), expressed in pose-1 coordinates and eased in with the head.
   const Mhead2 = partMatrix(PoseMorph.solve(rig, 1)[part]);
   const C = mul(mul(inv(Mhead2), H2), inv(H1));
   const corrDeg = Math.atan2(C[1], C[0]) / RAD;
+  const corrScale = s1 === s2 ? 1 : Math.hypot(C[0], C[1]);   // size change between the poses, if any
   const pivot = placement.pivot || [
-    H1[4] + (viewBox[0] + viewBox[2] / 2) * s, H1[5] + (viewBox[1] + viewBox[3] / 2) * s
+    H1[4] + (viewBox[0] + viewBox[2] / 2) * s1, H1[5] + (viewBox[1] + viewBox[3] / 2) * s1
   ];
-  const turned = rotAbout(corrDeg, pivot[0], pivot[1]);
+  const turned = rotAbout(corrDeg, pivot[0], pivot[1], corrScale);
   const corrShift = [C[4] - turned[4], C[5] - turned[5]];
 
   // DOM: <g data-accessory=…  transform=pose-follow> <g transform=placement> …original nodes… </g></g>
@@ -136,7 +140,8 @@ export function createHeadAccessory(svg, opts) {
   function poseMatrix(pose) {
     const T = PoseMorph.solve(rig, pose)[part];
     const k = T.t;   // the head's own eased progress → the accessory never leads or lags the head
-    const corr = mul([1, 0, 0, 1, corrShift[0] * k, corrShift[1] * k], rotAbout(corrDeg * k, pivot[0], pivot[1]));
+    const corr = mul([1, 0, 0, 1, corrShift[0] * k, corrShift[1] * k],
+      rotAbout(corrDeg * k, pivot[0], pivot[1], 1 + (corrScale - 1) * k));
     return { m: mul(mul(partMatrix(T), corr), H1), T };
   }
   // The same, plus the dog's head turn — the full motion of the accessory at sequence time t.

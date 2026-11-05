@@ -8,7 +8,7 @@ ACCESSORY.svg  the accessory (e.g. accessories/head/christmas-hat/assets/christm
 POSE.svg       the dog pose shown on the reference (mascot/assets/dog-pose-1.svg or -2.svg)
 REFERENCE.png  screenshot of the dog wearing the accessory (any zoom, any position)
 COLOURS        which colour masks to fit by: hat (red cloth + blue-grey outline, default)
-               or carrot (orange root + green leaves)
+               or carrot (orange root + green leaves) or bow (light pink + dark pink outline)
 
 Prints { x, y, rotate } — the accessory's SVG origin in the dog's 240×240 frame and its rotation —
 ready for the `placement.pose1` / `placement.pose2` of an accessory.
@@ -54,7 +54,10 @@ def similarity(src, dst):
 
 def masks(img, alpha=None, colours='hat'):
     b, g, r = [img[..., i].astype(int) for i in range(3)]
-    if colours == 'carrot':
+    if colours == 'bow':
+        one = (r > 200) & (g > 70) & (b > 120) & (r - g > 40)                 # light pink
+        two = (r > 140) & (r < 215) & (g < 70) & (b < 120)                    # dark pink outline
+    elif colours == 'carrot':
         one = (r > 190) & (g > 70) & (g < 215) & (b < 90) & (r - g > 40)      # orange root
         two = (g > 90) & (g - r > 15) & (g - b > 60)                          # green leaves
     else:

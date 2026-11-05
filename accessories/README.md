@@ -7,6 +7,7 @@
 | Аксессуар | Папка | Компонент |
 |---|---|---|
 | Новогодняя шапочка | [`head/christmas-hat/`](head/christmas-hat/) | `ChristmasHat` |
+| Бантик | [`head/bow/`](head/bow/) | `Bow` |
 | Морковка во рту | [`mouth/carrot/`](mouth/carrot/) | `Carrot` |
 
 ## Подключение
@@ -20,7 +21,8 @@ import { ChristmasHat } from '../accessories/head/christmas-hat';
 </ChristmasHat>
 ```
 
-Несколько аксессуаров сразу — вложением, внешним идёт `ChristmasHat`:
+Несколько аксессуаров сразу — вложением, внешним идёт `ChristmasHat`
+(`Bow` и `Carrot` можно вкладывать друг в друга):
 
 ```tsx
 import { Carrot } from '../accessories/mouth/carrot';
@@ -45,7 +47,7 @@ npm run dev       # http://localhost:5173
 ```
 
 На странице: Play / Pause, ползунок по всему 12-секундному циклу, быстрые переходы
-(поворот головы, приседание, поза 2, возвращение), включение и выключение морковки и шапочки,
+(поворот головы, приседание, поза 2, возвращение), включение и выключение каждого аксессуара,
 фоны и размеры (240, 120, 64 px).
 
 ## Состав
@@ -53,7 +55,8 @@ npm run dev       # http://localhost:5173
 ```text
 accessories/
 ├── head/                      аксессуары на голову
-│   └── christmas-hat/         новогодняя шапочка (ChristmasHat.tsx, SVG, анимации)
+│   ├── christmas-hat/         новогодняя шапочка (ChristmasHat.tsx, SVG, анимации)
+│   └── bow/                   бантик (Bow.tsx, SVG, анимации)
 ├── mouth/                     аксессуары для рта
 │   └── carrot/                морковка (Carrot.tsx, SVG, анимации)
 ├── core/                      общий движок аксессуаров
@@ -73,20 +76,23 @@ accessories/
 
 ```js
 import { createHeadAccessory } from '../../core/headAccessory.js';
-import BOW_SVG from './assets/bow.svg?raw';
+import FLOWER_SVG from './assets/flower.svg?raw';
 
 createHeadAccessory(svg, {
-  name: 'bow', markup: BOW_SVG,
+  name: 'flower', markup: FLOWER_SVG,
   placement: { scale: 1, pose1: { x, y, rotate }, pose2: { x, y, rotate } }
 });
 ```
 
 Аксессуар, который должен лежать под головой и ушками (как то, что во рту), — с `layer: 'under-head'`.
 
+Если на референсах аксессуар в позах разного размера, у позы может быть свой `scale`
+(как у бантика).
+
 Значения `pose1` и `pose2` выдаёт `tools/fit_placement.py` (нужны `rsvg-convert` и Python с
 numpy, scipy, opencv-python). Последний аргумент — по каким цветам искать: `hat` (красный и
-серо-голубой) или `carrot` (оранжевый и зелёный):
+серо-голубой), `carrot` (оранжевый и зелёный) или `bow` (розовый):
 
 ```bash
-python3 accessories/tools/fit_placement.py bow.svg mascot/assets/dog-pose-1.svg reference-pose-1.png hat
+python3 accessories/tools/fit_placement.py flower.svg mascot/assets/dog-pose-1.svg reference-pose-1.png hat
 ```
