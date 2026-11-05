@@ -23,11 +23,11 @@ const MARKS = [
 export default function App() {
   const dog = useRef(null);
   const [playing, setPlaying] = useState(true);
-  const [glasses, setGlasses] = useState(true);
+  const [glasses, setGlasses] = useState(false);
   const [duck, setDuck] = useState(false);
   const [ball, setBall] = useState(false);
   const [bow, setBow] = useState(false);
-  const [carrot, setCarrot] = useState(false);
+  const [carrot, setCarrot] = useState(true);
   const [hat, setHat] = useState(false);
   const [info, setInfo] = useState({ time: 0, blockIndex: 0, stage: 'pose 1' });
   const [size, setSize] = useState(240);
@@ -39,7 +39,7 @@ export default function App() {
 
   return (
     <main className="player">
-      <h1>Примерка: очки</h1>
+      <h1>Примерка: морковка</h1>
       <div
         className={`stage bg-${bg}`}
         style={{

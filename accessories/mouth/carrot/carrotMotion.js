@@ -18,10 +18,6 @@ import { parsePath, buildPath } from '../../core/pathDeform.js';
 import { buildInertia } from '../../core/inertia.js';
 
 export const CARROT_MOTION = {
-  // Geometry of the carrot (its own SVG coordinates, 102 × 36)
-  leafBase: [33, 18],        // where the leaves sit on the root: the bend turns around this point
-  leafLength: 27,            // base → leaf tips (the tips are at x ≈ 6)
-  rootCentre: [59.5, 18],    // centre of the root, for breathing
   // 1. Leaf sway: degrees at the leaf tips; one slow swing per 3-second block (blocks join seamlessly)
   sway: { amp: 5, cycles: 1, phase: 0.62 },
   // 2. Breathing: root growth across (share of its thickness) and along (share of its length)
@@ -32,10 +28,16 @@ export const CARROT_MOTION = {
   shake: { omega: 2 * Math.PI * 3.4, zeta: 0.14, gain: 1.35, maxDeg: 24, smoothing: 0.16 }
 };
 
-// Element roles by order in carrot.svg (the file itself is not changed)
+// Element roles by order in carrot.svg (the file itself is not changed); shape 10 is the <mask> of the
+// root outline: it breathes with the root
 const LEAF = 'leaf', ROOT = 'root';
-const ROLES = [LEAF, LEAF, ROOT, ROOT, LEAF, LEAF, LEAF, LEAF, LEAF, LEAF, LEAF,
-  ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, ROOT];
+const ROLES = [LEAF, LEAF, ROOT, LEAF, LEAF, LEAF, LEAF, LEAF, ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, ROOT];
+// Geometry of the drawing (its own SVG coordinates, 109 × 43)
+const GEOMETRY = {
+  leafBase: [37.56, 21.25],  // where the leaves sit on the root: the bend turns around this point
+  leafLength: 30.73,         // base → leaf tips
+  rootCentre: [67.73, 21.25] // centre of the root, for breathing
+};
 
 const RAD = Math.PI / 180, TAU = Math.PI * 2;
 const smooth01 = u => { u = Math.min(1, Math.max(0, u)); return u * u * (3 - 2 * u); };
@@ -45,26 +47,30 @@ export function createCarrotMotion(cfg = CARROT_MOTION) {
   return ({ elements, placementAt, duration, cfg: dog }) => {
     const shapes = elements.filter(e => e.tagName.toLowerCase() !== 'defs');
     if (shapes.length !== ROLES.length) return { apply() {} };   // a different carrot drawing: no motion
+    const geo = { ...GEOMETRY, ...cfg };   // geometry of the drawing (can be overridden in cfg)
 
-    const [bx, by] = cfg.leafBase, [rx, ry] = cfg.rootCentre;
+    const [bx, by] = geo.leafBase, [rx, ry] = geo.rootCentre;
     const items = shapes.map((el, i) => {
       const tag = el.tagName.toLowerCase();
-      return tag === 'path'
-        ? { el, role: ROLES[i], parsed: parsePath(el.getAttribute('d')) }
-        : { el, role: ROLES[i], circle: [+el.getAttribute('cx'), +el.getAttribute('cy')] };
+      if (tag === 'mask') el = el.querySelector('path');   // reshape the mask's shape with its owner
+      return tag === 'circle'
+        ? { el, role: ROLES[i], circle: [+el.getAttribute('cx'), +el.getAttribute('cy')] }
+        : { el, role: ROLES[i], parsed: parsePath(el.getAttribute('d')) };
     });
 
-    // Shake: the leaves point from the base towards −x
+    // Shake: the leaves point from the base towards −x. Their length counts in the dog's units (the
+    // drawing may be placed at another scale), so the shake is the same for every drawing.
+    const m0 = placementAt(0), size = Math.hypot(m0[0], m0[1]);
     const lag = buildInertia({
       placementAt, duration, periodic: true, smoothing: cfg.shake.smoothing,
-      anchor: cfg.rootCentre,
+      anchor: geo.rootCentre,
       translation: { omega: cfg.shake.omega, zeta: cfg.shake.zeta },
-      springs: { leaves: { omega: cfg.shake.omega, zeta: cfg.shake.zeta, axis: [-1, 0], length: cfg.leafLength } }
+      springs: { leaves: { omega: cfg.shake.omega, zeta: cfg.shake.zeta, axis: [-1, 0], length: geo.leafLength * size } }
     });
 
     let leafAngle = 0, across = 0, along = 0;
     const leafMap = (x, y) => {
-      const w = smooth01((bx - x) / cfg.leafLength);   // 0 at the base … 1 at the tips
+      const w = smooth01((bx - x) / geo.leafLength);   // 0 at the base … 1 at the tips
       if (!w) return [x, y];
       const a = leafAngle * w, c = Math.cos(a), s = Math.sin(a), dx = x - bx, dy = y - by;
       return [bx + c * dx - s * dy, by + s * dx + c * dy];
