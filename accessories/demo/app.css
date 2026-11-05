@@ -3,10 +3,10 @@
   :root { --bg: #16181c; --card: #1f2227; --line: #30343b; --fg: #eceef1; --muted: #9aa1ab; --accent: #6f95ff; --accent-fg: #0d1220; color-scheme: dark; }
 }
 * { box-sizing: border-box; }
-body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 16px;
+body { margin: 0; min-height: 100vh; display: block; padding: 24px 16px;
   background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
 .player { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px;
-  display: flex; flex-direction: column; gap: 14px; align-items: center; width: 300px; max-width: 100%; }
+  display: flex; flex-direction: column; gap: 14px; align-items: center; width: 100%; max-width: 340px; margin-inline: auto; }
 .stage { background: #fff; border-radius: 10px; display: grid; place-items: center; }
 /* stage backgrounds: the mascot itself is transparent and is checked on each of them */
 .stage.bg-white { background: #fff; }
@@ -24,3 +24,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .scrub input { width: 100%; accent-color: var(--accent); }
 .meta { font: 12px/1.3 ui-monospace, Menlo, monospace; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
 h1 { margin: 0; font-size: 15px; font-weight: 650; }
+
+/* Preview canvas: room around the dog's 240×240 frame (see ROOM in App.jsx), so accessories that
+   rise above the head are never cut; the dog's frame can be shown dashed */
+.stage { position: relative; display: block; box-sizing: border-box; max-width: 100%; }
+.stage svg { overflow: visible; }
+.dog-frame { position: absolute; border: 1.5px dashed #c4161c; pointer-events: none; box-sizing: border-box; }

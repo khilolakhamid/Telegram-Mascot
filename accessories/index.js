@@ -7,6 +7,7 @@ export {
   CHRISTMAS_HAT_PLACEMENT, CHRISTMAS_HAT_SVG, CHRISTMAS_HAT_MOTION
 } from './head/christmas-hat/index.ts';
 export { Bow, createBow, createBowMotion, BOW_PLACEMENT, BOW_SVG, BOW_MOTION } from './head/bow/index.ts';
+export { Duck, createDuck, createDuckMotion, DUCK_PLACEMENT, DUCK_SVG, DUCK_MOTION } from './head/duck/index.ts';
 
 // Mouth accessories
 export { Carrot, createCarrot, createCarrotMotion, CARROT_PLACEMENT, CARROT_SVG, CARROT_MOTION } from './mouth/carrot/index.ts';

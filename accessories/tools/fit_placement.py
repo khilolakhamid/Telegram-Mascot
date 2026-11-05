@@ -10,6 +10,7 @@ REFERENCE.png  screenshot of the dog wearing the accessory (any zoom, any positi
 COLOURS        which colour masks to fit by: hat (red cloth + blue-grey outline, default)
                or carrot (orange root + green leaves) or bow (light pink + dark pink outline)
                or ball (light yellow-green + dark olive outline)
+               or duck (yellow body + orange outline and beak)
 
 Prints { x, y, rotate } — the accessory's SVG origin in the dog's 240×240 frame and its rotation —
 ready for the `placement.pose1` / `placement.pose2` of an accessory.
@@ -55,7 +56,10 @@ def similarity(src, dst):
 
 def masks(img, alpha=None, colours='hat'):
     b, g, r = [img[..., i].astype(int) for i in range(3)]
-    if colours == 'ball':
+    if colours == 'duck':
+        one = (r > 225) & (g > 185) & (b < 140) & (r - b > 120)               # yellow body
+        two = (r > 190) & (g > 70) & (g < 175) & (b < 90)                     # orange outline, beak
+    elif colours == 'ball':
         one = (g > 165) & (g - b > 80) & (r > 110)                            # light yellow-green
         two = (g > 80) & (g < 140) & (g - b > 35) & (r < 130)                 # dark olive outline
     elif colours == 'bow':

@@ -4,11 +4,17 @@ import { ChristmasHat } from '../head/christmas-hat';
 import { Carrot } from '../mouth/carrot';
 import { Bow } from '../head/bow';
 import { Ball } from '../mouth/ball';
+import { Duck } from '../head/duck';
 
 // Try-on page: the mascot dog (from ../mascot, unchanged) with accessories put on it.
 // Play/Pause, the full 12-second sequence on a slider, each accessory on/off, backgrounds and sizes.
 const BLOCK_NAMES = ['поза 1', 'поза 1', 'поза 1', 'игровая поза'];
 const STAGE_NAMES = { 'pose 1': 'поза 1', crouch: 'приседание', 'pose 2': 'поза 2', return: 'возвращение' };
+// Preview canvas around the dog's own 240×240 frame (in dog units): room above and at the sides
+// for accessories that rise above the head while the dog moves (the duck goes up to 25.4 above
+// the frame at about 11.8 s, the hat up to 16). The dog and accessories are not scaled or moved.
+const ROOM = { top: 36, side: 20, bottom: 8 };
+
 const MARKS = [
   [0, 'Начало'], [0.6, 'Поворот головы'], [9.25, 'Приседание'], [10.5, 'Поза 2'], [11.75, 'Возвращение']
 ];
@@ -16,28 +22,42 @@ const MARKS = [
 export default function App() {
   const dog = useRef(null);
   const [playing, setPlaying] = useState(true);
-  const [ball, setBall] = useState(true);
+  const [duck, setDuck] = useState(true);
+  const [ball, setBall] = useState(false);
   const [bow, setBow] = useState(false);
   const [carrot, setCarrot] = useState(false);
   const [hat, setHat] = useState(false);
   const [info, setInfo] = useState({ time: 0, blockIndex: 0, stage: 'pose 1' });
   const [size, setSize] = useState(240);
+  const [showFrame, setShowFrame] = useState(false);
+  const k = size / 240;
   const [bg, setBg] = useState('white');
 
   const jump = t => { setPlaying(false); dog.current.seek(t); };
 
   return (
     <main className="player">
-      <h1>Примерка: мячик</h1>
-      <div className={`stage bg-${bg}`} style={{ width: size, height: size }}>
+      <h1>Примерка: уточка</h1>
+      <div
+        className={`stage bg-${bg}`}
+        style={{
+          width: (240 + 2 * ROOM.side) * k, height: (240 + ROOM.top + ROOM.bottom) * k,
+          paddingTop: ROOM.top * k, paddingLeft: ROOM.side * k
+        }}
+      >
+        {showFrame && (
+          <div className="dog-frame" style={{ top: ROOM.top * k, left: ROOM.side * k, width: size, height: size }} />
+        )}
         <ChristmasHat enabled={hat}>
-          <Bow enabled={bow}>
-            <Carrot enabled={carrot}>
-              <Ball enabled={ball}>
-                <DogMascot ref={dog} size={size} playing={playing} onFrame={setInfo} />
-              </Ball>
-            </Carrot>
-          </Bow>
+          <Duck enabled={duck}>
+            <Bow enabled={bow}>
+              <Carrot enabled={carrot}>
+                <Ball enabled={ball}>
+                  <DogMascot ref={dog} size={size} playing={playing} onFrame={setInfo} />
+                </Ball>
+              </Carrot>
+            </Bow>
+          </Duck>
         </ChristmasHat>
       </div>
 
@@ -51,6 +71,9 @@ export default function App() {
       </div>
 
       <div className="row" role="group" aria-label="Аксессуары">
+        <button type="button" className={duck ? 'primary' : ''} aria-pressed={duck} onClick={() => setDuck(v => !v)}>
+          🐥 Уточка: {duck ? 'вкл' : 'выкл'}
+        </button>
         <button type="button" className={ball ? 'primary' : ''} aria-pressed={ball} onClick={() => setBall(v => !v)}>
           🎾 Мячик: {ball ? 'вкл' : 'выкл'}
         </button>
@@ -89,6 +112,12 @@ export default function App() {
         {[['white', 'Белый'], ['dark', 'Тёмный'], ['color', 'Цветной'], ['checker', 'Прозрачность']].map(([k, label]) => (
           <button key={k} type="button" className={bg === k ? 'primary' : ''} onClick={() => setBg(k)}>{label}</button>
         ))}
+      </div>
+
+      <div className="row sizes" role="group" aria-label="Рамка кадра">
+        <button type="button" className={showFrame ? 'primary' : ''} aria-pressed={showFrame} onClick={() => setShowFrame(v => !v)}>
+          Кадр собачки 240×240: {showFrame ? 'показан' : 'скрыт'}
+        </button>
       </div>
 
       <div className="row sizes" role="group" aria-label="Размер">
