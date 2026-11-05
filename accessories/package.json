@@ -2,7 +2,7 @@
   "name": "telegram-mascot-accessories",
   "private": true,
   "version": "0.1.0",
-  "description": "Telegram Mascot — accessories for the dog (Christmas hat, bow, carrot), attached at runtime to ../mascot",
+  "description": "Telegram Mascot — accessories for the dog (Christmas hat, bow, carrot, ball), attached at runtime to ../mascot",
   "type": "module",
   "scripts": {
     "dev": "vite",

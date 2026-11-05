@@ -9,6 +9,7 @@
 | Новогодняя шапочка | [`head/christmas-hat/`](head/christmas-hat/) | `ChristmasHat` |
 | Бантик | [`head/bow/`](head/bow/) | `Bow` |
 | Морковка во рту | [`mouth/carrot/`](mouth/carrot/) | `Carrot` |
+| Мячик во рту | [`mouth/ball/`](mouth/ball/) | `Ball` |
 
 ## Подключение
 
@@ -22,7 +23,7 @@ import { ChristmasHat } from '../accessories/head/christmas-hat';
 ```
 
 Несколько аксессуаров сразу — вложением, внешним идёт `ChristmasHat`
-(`Bow` и `Carrot` можно вкладывать друг в друга):
+(`Bow`, `Carrot` и `Ball` можно вкладывать друг в друга):
 
 ```tsx
 import { Carrot } from '../accessories/mouth/carrot';
@@ -58,7 +59,8 @@ accessories/
 │   ├── christmas-hat/         новогодняя шапочка (ChristmasHat.tsx, SVG, анимации)
 │   └── bow/                   бантик (Bow.tsx, SVG, анимации)
 ├── mouth/                     аксессуары для рта
-│   └── carrot/                морковка (Carrot.tsx, SVG, анимации)
+│   ├── carrot/                морковка (Carrot.tsx, SVG, анимации)
+│   └── ball/                  мячик (Ball.tsx, SVG, анимации)
 ├── core/                      общий движок аксессуаров
 │   ├── headAccessory.js       крепит SVG к голове собачки (над головой или под ней) и ведёт за головой
 │   ├── inertia.js             инерция (пружины от движения головы)
@@ -91,7 +93,8 @@ createHeadAccessory(svg, {
 
 Значения `pose1` и `pose2` выдаёт `tools/fit_placement.py` (нужны `rsvg-convert` и Python с
 numpy, scipy, opencv-python). Последний аргумент — по каким цветам искать: `hat` (красный и
-серо-голубой), `carrot` (оранжевый и зелёный) или `bow` (розовый):
+серо-голубой), `carrot` (оранжевый и зелёный), `bow` (розовый) или `ball`
+(жёлто-зелёный):
 
 ```bash
 python3 accessories/tools/fit_placement.py flower.svg mascot/assets/dog-pose-1.svg reference-pose-1.png hat

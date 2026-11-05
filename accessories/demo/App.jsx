@@ -3,6 +3,7 @@ import { DogMascot } from '../../mascot/index.js';
 import { ChristmasHat } from '../head/christmas-hat';
 import { Carrot } from '../mouth/carrot';
 import { Bow } from '../head/bow';
+import { Ball } from '../mouth/ball';
 
 // Try-on page: the mascot dog (from ../mascot, unchanged) with accessories put on it.
 // Play/Pause, the full 12-second sequence on a slider, each accessory on/off, backgrounds and sizes.
@@ -15,7 +16,8 @@ const MARKS = [
 export default function App() {
   const dog = useRef(null);
   const [playing, setPlaying] = useState(true);
-  const [bow, setBow] = useState(true);
+  const [ball, setBall] = useState(true);
+  const [bow, setBow] = useState(false);
   const [carrot, setCarrot] = useState(false);
   const [hat, setHat] = useState(false);
   const [info, setInfo] = useState({ time: 0, blockIndex: 0, stage: 'pose 1' });
@@ -26,12 +28,14 @@ export default function App() {
 
   return (
     <main className="player">
-      <h1>Примерка: бантик</h1>
+      <h1>Примерка: мячик</h1>
       <div className={`stage bg-${bg}`} style={{ width: size, height: size }}>
         <ChristmasHat enabled={hat}>
           <Bow enabled={bow}>
             <Carrot enabled={carrot}>
-              <DogMascot ref={dog} size={size} playing={playing} onFrame={setInfo} />
+              <Ball enabled={ball}>
+                <DogMascot ref={dog} size={size} playing={playing} onFrame={setInfo} />
+              </Ball>
             </Carrot>
           </Bow>
         </ChristmasHat>
@@ -47,6 +51,9 @@ export default function App() {
       </div>
 
       <div className="row" role="group" aria-label="Аксессуары">
+        <button type="button" className={ball ? 'primary' : ''} aria-pressed={ball} onClick={() => setBall(v => !v)}>
+          🎾 Мячик: {ball ? 'вкл' : 'выкл'}
+        </button>
         <button type="button" className={bow ? 'primary' : ''} aria-pressed={bow} onClick={() => setBow(v => !v)}>
           🎀 Бантик: {bow ? 'вкл' : 'выкл'}
         </button>

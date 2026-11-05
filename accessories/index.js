@@ -10,6 +10,7 @@ export { Bow, createBow, createBowMotion, BOW_PLACEMENT, BOW_SVG, BOW_MOTION } f
 
 // Mouth accessories
 export { Carrot, createCarrot, createCarrotMotion, CARROT_PLACEMENT, CARROT_SVG, CARROT_MOTION } from './mouth/carrot/index.ts';
+export { Ball, createBall, createBallMotion, BALL_PLACEMENT, BALL_SVG, BALL_MOTION } from './mouth/ball/index.ts';
 
 // Shared engine for building new accessories
 export { createHeadAccessory } from './core/headAccessory.js';
