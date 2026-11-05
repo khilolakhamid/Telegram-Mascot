@@ -11,12 +11,13 @@ COLOURS        which colour masks to fit by: hat (red cloth + blue-grey outline,
                or carrot (orange root + green leaves) or bow (light pink + dark pink outline)
                or ball (light yellow-green + dark olive outline)
                or duck (yellow body + orange outline and beak)
+               or glasses (lime frame + green frame edge)
 
 Prints { x, y, rotate } — the accessory's SVG origin in the dog's 240×240 frame and its rotation —
 ready for the `placement.pose1` / `placement.pose2` of an accessory.
 
 How: the dog's eyes and nose (the three black shapes) register the screenshot to the dog's
-coordinates; then the accessory is fitted to the screenshot by two colour masks (see COLOURS)
+coordinates — or, when the accessory covers the eyes (glasses), the dog's grey outline and nose; then the accessory is fitted to the screenshot by two colour masks (see COLOURS)
 with a scale + rotation + shift search.
 Needs: rsvg-convert, Python 3 with numpy, scipy, opencv-python.
 """
@@ -54,9 +55,53 @@ def similarity(src, dst):
     return np.hstack([s * R, (md - s * R @ ms)[:, None]])
 
 
+def outline_mask(img):
+    """The dog's grey outline (#B6B6B6 and its anti-aliased edges): neutral grey, mid brightness."""
+    c = img[..., :3].astype(int)
+    v, spread = c.max(2), c.max(2) - c.min(2)
+    return ((spread < 12) & (v > 150) & (v < 205)).astype(np.float32)
+
+
+def register_by_outline(ref, dog):
+    """Screenshot px → dog units, fitted on the grey outline (and nose) when the eyes are hidden."""
+    rm, dm = outline_mask(ref), outline_mask(dog)
+    DM = cv2.GaussianBlur(dm, (0, 0), 3)
+    H, W = dm.shape
+    nose_r = dark_features(ref)[0]                  # the largest dark shape: the nose
+    nose_d = dark_features(dog)[0]
+    ys, xs = np.nonzero(rm); yd, xd = np.nonzero(dm)
+    s0 = (yd.max() - yd.min()) / (ys.max() - ys.min())   # dog render px per screenshot px
+
+    def A(p):
+        s, th, tx, ty = p
+        c, n = np.cos(th) * s, np.sin(th) * s
+        return np.array([[c, -n, tx], [n, c, ty]])
+
+    def loss(p, sig=3):
+        w = cv2.warpAffine(rm, A(p), (W, H))
+        return -(cv2.GaussianBlur(w, (0, 0), sig) * DM).sum() / (np.sqrt(w.sum() * dm.sum()) + 1)
+
+    p = [s0, 0.0, 0.0, 0.0]
+    p[2], p[3] = nose_d - A(p)[:, :2] @ nose_r
+    p = minimize(loss, p, method='Nelder-Mead', options={'maxiter': 800}).x
+    p = minimize(lambda q: loss(q, 1.5), p, method='Nelder-Mead', options={'maxiter': 800, 'xatol': 1e-5, 'fatol': 1e-7}).x
+    return A(p) / Z
+
+
+def register(ref, dog):
+    """Screenshot px → dog units: by eyes and nose when all three are visible, else by the outline."""
+    fr = dark_features(ref)
+    if len(fr) == 3:
+        return similarity(fr, dark_features(dog) / Z)
+    return register_by_outline(ref, dog)
+
+
 def masks(img, alpha=None, colours='hat'):
     b, g, r = [img[..., i].astype(int) for i in range(3)]
-    if colours == 'duck':
+    if colours == 'glasses':
+        one = (g > 200) & (r > 120) & (b < 150) & (g - b > 90)                # lime frame
+        two = (g > 80) & (r < 110) & (b < 90) & (g - r > 45)                  # green frame edge
+    elif colours == 'duck':
         one = (r > 225) & (g > 185) & (b < 140) & (r - b > 120)               # yellow body
         two = (r > 190) & (g > 70) & (g < 175) & (b < 90)                     # orange outline, beak
     elif colours == 'ball':
@@ -79,7 +124,7 @@ def masks(img, alpha=None, colours='hat'):
 def main(acc_svg, pose_svg, ref_png, colours='hat'):
     ref = cv2.imread(ref_png)
     dog = render(pose_svg, '#1f1f1f')
-    to_dog = similarity(dark_features(ref), dark_features(dog) / Z)   # screenshot px → dog units
+    to_dog = register(ref, dog)   # screenshot px → dog units
 
     acc = render(acc_svg)
     ar, ab = masks(acc[..., :3], acc[..., 3], colours)

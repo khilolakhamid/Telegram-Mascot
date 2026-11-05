@@ -9,6 +9,9 @@ export {
 export { Bow, createBow, createBowMotion, BOW_PLACEMENT, BOW_SVG, BOW_MOTION } from './head/bow/index.ts';
 export { Duck, createDuck, createDuckMotion, DUCK_PLACEMENT, DUCK_SVG, DUCK_MOTION } from './head/duck/index.ts';
 
+// Eyes accessories
+export { Glasses, createGlasses, createGlassesMotion, GLASSES_PLACEMENT, GLASSES_SVG, GLASSES_MOTION } from './eyes/glasses/index.ts';
+
 // Mouth accessories
 export { Carrot, createCarrot, createCarrotMotion, CARROT_PLACEMENT, CARROT_SVG, CARROT_MOTION } from './mouth/carrot/index.ts';
 export { Ball, createBall, createBallMotion, BALL_PLACEMENT, BALL_SVG, BALL_MOTION } from './mouth/ball/index.ts';

@@ -5,6 +5,7 @@ import { Carrot } from '../mouth/carrot';
 import { Bow } from '../head/bow';
 import { Ball } from '../mouth/ball';
 import { Duck } from '../head/duck';
+import { Glasses } from '../eyes/glasses';
 
 // Try-on page: the mascot dog (from ../mascot, unchanged) with accessories put on it.
 // Play/Pause, the full 12-second sequence on a slider, each accessory on/off, backgrounds and sizes.
@@ -16,13 +17,14 @@ const STAGE_NAMES = { 'pose 1': 'поза 1', crouch: 'приседание', 'p
 const ROOM = { top: 36, side: 20, bottom: 8 };
 
 const MARKS = [
-  [0, 'Начало'], [0.6, 'Поворот головы'], [9.25, 'Приседание'], [10.5, 'Поза 2'], [11.75, 'Возвращение']
+  [0, 'Начало'], [0.6, 'Поворот головы'], [1.3, 'Блеск линз'], [9.25, 'Приседание'], [10.5, 'Поза 2'], [11.75, 'Возвращение']
 ];
 
 export default function App() {
   const dog = useRef(null);
   const [playing, setPlaying] = useState(true);
-  const [duck, setDuck] = useState(true);
+  const [glasses, setGlasses] = useState(true);
+  const [duck, setDuck] = useState(false);
   const [ball, setBall] = useState(false);
   const [bow, setBow] = useState(false);
   const [carrot, setCarrot] = useState(false);
@@ -37,7 +39,7 @@ export default function App() {
 
   return (
     <main className="player">
-      <h1>Примерка: уточка</h1>
+      <h1>Примерка: очки</h1>
       <div
         className={`stage bg-${bg}`}
         style={{
@@ -51,11 +53,13 @@ export default function App() {
         <ChristmasHat enabled={hat}>
           <Duck enabled={duck}>
             <Bow enabled={bow}>
-              <Carrot enabled={carrot}>
-                <Ball enabled={ball}>
-                  <DogMascot ref={dog} size={size} playing={playing} onFrame={setInfo} />
-                </Ball>
-              </Carrot>
+              <Glasses enabled={glasses}>
+                <Carrot enabled={carrot}>
+                  <Ball enabled={ball}>
+                    <DogMascot ref={dog} size={size} playing={playing} onFrame={setInfo} />
+                  </Ball>
+                </Carrot>
+              </Glasses>
             </Bow>
           </Duck>
         </ChristmasHat>
@@ -71,6 +75,9 @@ export default function App() {
       </div>
 
       <div className="row" role="group" aria-label="Аксессуары">
+        <button type="button" className={glasses ? 'primary' : ''} aria-pressed={glasses} onClick={() => setGlasses(v => !v)}>
+          🕶️ Очки: {glasses ? 'вкл' : 'выкл'}
+        </button>
         <button type="button" className={duck ? 'primary' : ''} aria-pressed={duck} onClick={() => setDuck(v => !v)}>
           🐥 Уточка: {duck ? 'вкл' : 'выкл'}
         </button>
