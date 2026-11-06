@@ -7,6 +7,7 @@ import { Ball } from '../mouth/ball';
 import { Duck } from '../head/duck';
 import { Glasses } from '../eyes/glasses';
 import { Bone } from '../mouth/bone';
+import { Cheese } from '../head/cheese';
 
 // Try-on page: the mascot dog (from ../mascot, unchanged) with accessories put on it.
 // Play/Pause, the full 12-second sequence on a slider, each accessory on/off, backgrounds and sizes.
@@ -29,7 +30,8 @@ export default function App() {
   const [ball, setBall] = useState(false);
   const [bow, setBow] = useState(false);
   const [carrot, setCarrot] = useState(false);
-  const [bone, setBone] = useState(true);
+  const [bone, setBone] = useState(false);
+  const [cheese, setCheese] = useState(true);
   const [hat, setHat] = useState(false);
   const [info, setInfo] = useState({ time: 0, blockIndex: 0, stage: 'pose 1' });
   const [size, setSize] = useState(240);
@@ -41,7 +43,7 @@ export default function App() {
 
   return (
     <main className="player">
-      <h1>Примерка: косточка</h1>
+      <h1>Примерка: сыр</h1>
       <div
         className={`stage bg-${bg}`}
         style={{
@@ -54,6 +56,7 @@ export default function App() {
         )}
         <ChristmasHat enabled={hat}>
           <Duck enabled={duck}>
+          <Cheese enabled={cheese}>
             <Bow enabled={bow}>
               <Glasses enabled={glasses}>
                 <Carrot enabled={carrot}>
@@ -65,6 +68,7 @@ export default function App() {
                 </Carrot>
               </Glasses>
             </Bow>
+          </Cheese>
           </Duck>
         </ChristmasHat>
       </div>
@@ -79,6 +83,9 @@ export default function App() {
       </div>
 
       <div className="row" role="group" aria-label="Аксессуары">
+        <button type="button" className={cheese ? 'primary' : ''} aria-pressed={cheese} onClick={() => setCheese(v => !v)}>
+          🧀 Сыр: {cheese ? 'вкл' : 'выкл'}
+        </button>
         <button type="button" className={bone ? 'primary' : ''} aria-pressed={bone} onClick={() => setBone(v => !v)}>
           🦴 Косточка: {bone ? 'вкл' : 'выкл'}
         </button>

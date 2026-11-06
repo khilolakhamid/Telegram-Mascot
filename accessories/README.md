@@ -9,6 +9,7 @@
 | Новогодняя шапочка | [`head/christmas-hat/`](head/christmas-hat/) | `ChristmasHat` |
 | Бантик | [`head/bow/`](head/bow/) | `Bow` |
 | Уточка | [`head/duck/`](head/duck/) | `Duck` |
+| Сыр | [`head/cheese/`](head/cheese/) | `Cheese` |
 | Очки | [`eyes/glasses/`](eyes/glasses/) | `Glasses` |
 | Морковка во рту | [`mouth/carrot/`](mouth/carrot/) | `Carrot` |
 | Мячик во рту | [`mouth/ball/`](mouth/ball/) | `Ball` |
@@ -26,7 +27,7 @@ import { ChristmasHat } from '../accessories/head/christmas-hat';
 ```
 
 Несколько аксессуаров сразу — вложением, внешним идёт `ChristmasHat`
-(`Duck`, `Bow`, `Glasses`, `Carrot`, `Ball` и `Bone` можно вкладывать друг в друга):
+(`Duck`, `Cheese`, `Bow`, `Glasses`, `Carrot`, `Ball` и `Bone` можно вкладывать друг в друга):
 
 ```tsx
 import { Carrot } from '../accessories/mouth/carrot';
@@ -63,7 +64,8 @@ accessories/
 ├── head/                      аксессуары на голову
 │   ├── christmas-hat/         новогодняя шапочка (ChristmasHat.tsx, SVG, анимации)
 │   ├── bow/                   бантик (Bow.tsx, SVG, анимации)
-│   └── duck/                  уточка (Duck.tsx, SVG, анимации)
+│   ├── duck/                  уточка (Duck.tsx, SVG, анимации)
+│   └── cheese/                сыр (Cheese.tsx, SVG, анимации)
 ├── eyes/                      аксессуары для глаз
 │   └── glasses/               очки (Glasses.tsx, SVG, анимации)
 ├── mouth/                     аксессуары для рта
@@ -103,8 +105,8 @@ createHeadAccessory(svg, {
 Значения `pose1` и `pose2` выдаёт `tools/fit_placement.py` (нужны `rsvg-convert` и Python с
 numpy, scipy, opencv-python). Последний аргумент — по каким цветам искать: `hat` (красный и
 серо-голубой), `carrot` (оранжевый и зелёный), `bow` (розовый), `ball`
-(жёлто-зелёный), `duck` (жёлтый и оранжевый), `glasses` (салатовый и зелёный) или `bone`
-(кремовый и тёмно-коричневый).
+(жёлто-зелёный), `duck` (жёлтый и оранжевый), `glasses` (салатовый и зелёный), `bone`
+(кремовый и тёмно-коричневый) или `cheese` (жёлтый и коричнево-оранжевый).
 Если аксессуар закрывает глаза собачки, скриншот совмещается с ней по контуру и носу:
 
 ```bash

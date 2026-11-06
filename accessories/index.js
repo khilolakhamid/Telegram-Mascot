@@ -8,6 +8,7 @@ export {
 } from './head/christmas-hat/index.ts';
 export { Bow, createBow, createBowMotion, BOW_PLACEMENT, BOW_SVG, BOW_MOTION } from './head/bow/index.ts';
 export { Duck, createDuck, createDuckMotion, DUCK_PLACEMENT, DUCK_SVG, DUCK_MOTION } from './head/duck/index.ts';
+export { Cheese, createCheese, createCheeseMotion, CHEESE_PLACEMENT, CHEESE_SVG, CHEESE_MOTION } from './head/cheese/index.ts';
 
 // Eyes accessories
 export { Glasses, createGlasses, createGlassesMotion, GLASSES_PLACEMENT, GLASSES_SVG, GLASSES_MOTION } from './eyes/glasses/index.ts';

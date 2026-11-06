@@ -13,6 +13,7 @@ COLOURS        which colour masks to fit by: hat (red cloth + blue-grey outline,
                or duck (yellow body + orange outline and beak)
                or glasses (lime frame + green frame edge)
                or bone (cream bone + dark brown outline)
+               or cheese (yellow cheese + brown-orange outline)
 
 Prints { x, y, rotate } — the accessory's SVG origin in the dog's 240×240 frame and its rotation —
 ready for the `placement.pose1` / `placement.pose2` of an accessory.
@@ -99,7 +100,10 @@ def register(ref, dog):
 
 def masks(img, alpha=None, colours='hat'):
     b, g, r = [img[..., i].astype(int) for i in range(3)]
-    if colours == 'bone':
+    if colours == 'cheese':
+        one = (r > 225) & (g > 185) & (b < 140) & (r - b > 120)               # yellow cheese
+        two = (r > 150) & (g > 60) & (g < 130) & (b < 60) & (r - g > 60)      # brown-orange outline
+    elif colours == 'bone':
         one = (r > 200) & (r - b > 25) & (r - g < 35) & (g - b > 8)           # cream bone
         two = (r > 45) & (r < 150) & (r - b > 10) & (r - g < 25) & (g - b > 4) # dark brown outline
     elif colours == 'glasses':
