@@ -1,96 +1,84 @@
-# cheese — сыр на голове
+# cheese — Cheese on the head
 
-Аксессуар на голову собачки Telegram Mascot. Отдельный компонент: собачка (`mascot/`) не меняется,
-сыр надевается на неё снаружи и снимается без следа.
+A head accessory for the Telegram Mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the cheese is put on from the outside and removed without a trace.
 
-## Подключение
+## Usage
 
 ```tsx
-import { DogMascot } from '<путь>/mascot/index.js';
-import { Cheese } from '<путь>/accessories/head/cheese';
+import { DogMascot } from '<path>/mascot/index.js';
+import { Cheese } from '<path>/accessories/head/cheese';
 
 <Cheese>
   <DogMascot size={240} />
 </Cheese>
 
-<Cheese enabled={false}>…</Cheese>   // сыр снят — обычная собачка
-<Cheese motion={false}>…</Cheese>    // без своих движений, только посадка на голове
+<Cheese enabled={false}>…</Cheese>   // the cheese removed: the plain dog
+<Cheese motion={false}>…</Cheese>    // no motion of its own, placement on the head only
 ```
 
-С аксессуаром для рта: `<Cheese><Bone><DogMascot /></Bone></Cheese>`. Свои `ref` и `onFrame` на
-`DogMascot` продолжают работать.
+`Cheese` wraps exactly one `<DogMascot />` (or another accessory wrapper). Your own `ref` and `onFrame` on `DogMascot` keep working: the accessory subscribes to the dog's frames without taking them over.
 
-| Свойство | Тип | По умолчанию | |
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `children` | `<DogMascot />` | — | собачка, на которой лежит сыр |
-| `enabled` | `boolean` | `true` | лежит ли сыр |
-| `motion` | `boolean` | `true` | дыхание и покачивание при смене позы |
-| `className`, `style` | | | для обёртки (`<span>`, inline-block) |
+| `children` | `<DogMascot />` | — | the dog the cheese sits on |
+| `enabled` | `boolean` | `true` | whether the cheese is shown |
+| `motion` | `boolean` | `true` | breathing and swing on pose change |
+| `className`, `style` | | | applied to the wrapper (`<span>`, inline-block) |
 
-Без React — к собачке из `createDogAnimation`:
+Without React, attach it to a dog created with `createDogAnimation`:
 
 ```js
-import { createDogAnimation } from '<путь>/mascot/index.js';
-import { createCheese } from '<путь>/accessories/head/cheese';
+import { createDogAnimation } from '<path>/mascot/index.js';
+import { createCheese } from '<path>/accessories/head/cheese';
 
 let cheese = null;
 const dog = createDogAnimation(svg, { autoPlay: false, onFrame: info => cheese && cheese.update(info) });
 cheese = createCheese(svg);
 dog.play();
 
-cheese.setVisible(false);   // спрятать
-cheese.destroy();           // снять
+cheese.setVisible(false);   // hide
+cheese.destroy();           // remove
 ```
 
-SVG подключается как текст (`cheese.svg?raw`) — это работает в Vite; в других сборщиках нужен
-аналогичный загрузчик «файл как строка».
+Pass the whole `onFrame` info (including `time`) to `update`: the accessory's own motion is computed from it.
 
-## Состав
+The SVG is imported as text (`cheese.svg?raw`). This works in Vite; other bundlers need an equivalent "file as string" loader.
+
+## Files
 
 ```text
 cheese/
-├── Cheese.tsx          React-компонент
-├── index.ts            вход для отдельного импорта
-├── cheese.js           посадка на голове + createCheese() без React
-├── cheeseMotion.js     свои движения: дыхание и покачивание
-└── assets/cheese.svg   SVG сыра (оригинал, без изменений)
+├── Cheese.tsx          React component
+├── index.ts            entry point for a standalone import
+├── cheese.js           placement on the head + createCheese() without React
+├── cheeseMotion.js     own motion: breathing and swing
+└── assets/cheese.svg   cheese SVG (original, unchanged)
 ```
 
-## Посадка
+## Placement
 
-В DOM сыр — отдельная группа `<g data-accessory="cheese">` в конце группы головы собачки
-(`data-part="head-rig"`), поверх головы и ушек. Поворот головы и подъём при дыхании он получает тем
-же преобразованием, что и голова, а смену позы повторяет по тем же данным риггинга и с той же
-плавностью — не скользит и не отстаёт ни на кадр.
+In the DOM, the cheese is a separate group `<g data-accessory="cheese">` at the end of the dog's head group (`data-part="head-rig"`), drawn over the head and ears. It receives the head turn and the breathing lift through the same transform as the head, and follows pose changes with the same rig data and the same easing, so it never slides and never lags by a single frame.
 
-Расположение измерено по двум референсам (`accessories/tools/fit_placement.py … cheese`):
+Placement was measured from two reference images (`accessories/tools/fit_placement.py … cheese`):
 
-| Поза | x | y | наклон | масштаб |
+| Pose | x | y | Rotation | Scale |
 |---|---|---|---|---|
-| 1 | 62,16 | 20,13 | 0° | 1 |
-| 2 | 69,97 | 49,67 | 18,28° | 1 |
+| 1 | 62.16 | 20.13 | 0° | 1 |
+| 2 | 69.97 | 49.67 | 18.28° | 1 |
 
-Во всём цикле сыр остаётся внутри кадра собачки 240×240 (ближе всего к верхнему краю — 6,6 единицы
-около 11,8 с).
+Throughout the cycle the cheese stays inside the dog's 240×240 frame (closest to the top edge: 6.6 units, at about 11.8 s).
 
-## Свои движения
+## Own motion
 
-Поверх привязки к голове; посадка при этом не меняется. Весь сыр двигается как одно целое (одно
-преобразование группы), вокруг середины нижнего края, которым он лежит на голове, — поэтому не
-отрывается и не скользит. Настройки — `CHEESE_MOTION` в `cheeseMotion.js`.
+Applied on top of the head attachment; the placement itself does not change. The whole cheese moves as one piece (a single group transform) around the middle of its bottom edge, which rests on the head, so it never lifts off or slides. Settings: `CHEESE_MOTION` in `cheeseMotion.js`.
 
-| Движение | Как устроено |
+| Motion | How it works |
 |---|---|
-| Дыхание | Сыр равномерно увеличивается до 2 % от точки, где лежит, по той же кривой и в той же фазе, что дыхание собачки. |
-| Покачивание при смене позы | Сыр — пружинистый маятник на голове (3 колебания в секунду), его раскачивает ускорение головы. При приседании и вставании — лёгкий наклон около 4–5°, затем несколько затухающих колебаний (около секунды) и возврат на место. На спокойный поворот головы он реагирует едва заметно. |
+| Breathing | The cheese scales up evenly by up to 2% from the point where it rests, along the same curve and in the same phase as the dog's breathing. |
+| Swing on pose change | The cheese is a springy pendulum on the head (3 oscillations per second) driven by the head's acceleration. On the crouch and when standing up it tilts slightly, about 4–5°, then a few damped oscillations (about a second) and back into place. It barely reacts to the calm head turn. |
 
-Покачивание начинается вместе с движением головы и никогда его не опережает. После вставания оно
-продолжается в начале следующего цикла и затихает примерно за секунду. Все движения рассчитаны по
-времени последовательности: перемотка, пауза и любой кадр всегда показывают одно и то же.
+The swing starts together with the head movement and never leads it. After the dog stands up it continues into the start of the next cycle and settles within about a second. All motion is computed from the sequence time: seeking, pausing and any single frame always show the same picture, and the frame rate has no effect.
 
-## Совместимость с TGS
+## TGS compatibility
 
-Посадка — смещение, поворот и масштаб группы; свои движения — поворот и масштаб ещё одной группы
-вокруг сыра. SVG-файл не меняется (заливки, обводки и эллипсы, без масок и эффектов). В Lottie/TGS
-это отдельный слой с родителем «голова», над слоями головы и ушей. Первый блок позы 1 с сыром —
-отдельный файл (в нём затихает покачивание после вставания), второй и третий — одинаковые.
+Placement is a group translation, rotation and scale; the own motion is the rotation and scale of one more group around the cheese. The SVG file is unchanged (fills, strokes and ellipses, no masks or effects). In Lottie/TGS it is a separate layer parented to the head, above the head and ear layers. The first pose-1 block with the cheese is a separate file (the swing after standing up settles in it); the second and third are identical.

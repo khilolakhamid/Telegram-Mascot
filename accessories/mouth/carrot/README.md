@@ -1,23 +1,22 @@
-# carrot — морковка во рту
+# carrot — Carrot in the mouth
 
-Аксессуар для рта собачки Telegram Mascot. Отдельный компонент: собачка (`mascot/`) не меняется,
-морковка надевается на неё снаружи и убирается без следа.
+A mouth accessory for the Telegram Mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the carrot is put on from the outside and removed without a trace.
 
-## Подключение
+## Usage
 
 ```tsx
-import { DogMascot } from '<путь>/mascot/index.js';
-import { Carrot } from '<путь>/accessories/mouth/carrot';
+import { DogMascot } from '<path>/mascot/index.js';
+import { Carrot } from '<path>/accessories/mouth/carrot';
 
 <Carrot>
   <DogMascot size={240} />
 </Carrot>
 
-<Carrot enabled={false}>…</Carrot>   // морковка убрана — обычная собачка
-<Carrot motion={false}>…</Carrot>    // без своих движений, только посадка во рту
+<Carrot enabled={false}>…</Carrot>   // the carrot removed: the plain dog
+<Carrot motion={false}>…</Carrot>    // no motion of its own, placement in the mouth only
 ```
 
-Вместе с новогодней шапочкой:
+Together with the Christmas hat:
 
 ```tsx
 <ChristmasHat>
@@ -27,92 +26,74 @@ import { Carrot } from '<путь>/accessories/mouth/carrot';
 </ChristmasHat>
 ```
 
-`Carrot` оборачивает ровно один `<DogMascot />`. Свои `ref` и `onFrame` на `DogMascot`
-продолжают работать.
+`Carrot` wraps exactly one `<DogMascot />` (or another accessory wrapper). Your own `ref` and `onFrame` on `DogMascot` keep working: the accessory subscribes to the dog's frames without taking them over.
 
-| Свойство | Тип | По умолчанию | |
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `children` | `<DogMascot />` | — | собачка, которая держит морковку |
-| `enabled` | `boolean` | `true` | показана ли морковка |
-| `motion` | `boolean` | `true` | покачивание ботвы, дыхание, встряска |
-| `className`, `style` | | | для обёртки (`<span>`, inline-block) |
+| `children` | `<DogMascot />` | — | the dog that holds the carrot |
+| `enabled` | `boolean` | `true` | whether the carrot is shown |
+| `motion` | `boolean` | `true` | leaf sway, breathing, shake |
+| `className`, `style` | | | applied to the wrapper (`<span>`, inline-block) |
 
-Без React — к собачке из `createDogAnimation`:
+Without React, attach it to a dog created with `createDogAnimation`:
 
 ```js
-import { createDogAnimation } from '<путь>/mascot/index.js';
-import { createCarrot } from '<путь>/accessories/mouth/carrot';
+import { createDogAnimation } from '<path>/mascot/index.js';
+import { createCarrot } from '<path>/accessories/mouth/carrot';
 
 let carrot = null;
 const dog = createDogAnimation(svg, { autoPlay: false, onFrame: info => carrot && carrot.update(info) });
 carrot = createCarrot(svg);
 dog.play();
 
-carrot.setVisible(false);   // спрятать
-carrot.destroy();           // убрать
+carrot.setVisible(false);   // hide
+carrot.destroy();           // remove
 ```
 
-SVG подключается как текст (`carrot.svg?raw`) — это работает в Vite; в других сборщиках
-нужен аналогичный загрузчик «файл как строка».
+Pass the whole `onFrame` info (including `time`) to `update`: the accessory's own motion is computed from it.
 
-## Состав
+The SVG is imported as text (`carrot.svg?raw`). This works in Vite; other bundlers need an equivalent "file as string" loader.
+
+## Files
 
 ```text
 carrot/
-├── Carrot.tsx         React-компонент
-├── index.ts           вход для отдельного импорта
-├── carrot.js          посадка во рту + createCarrot() без React
-├── carrotMotion.js    свои движения: ботва, дыхание, встряска
-└── assets/carrot.svg  SVG морковки — утверждённый дизайн (без изменений)
+├── Carrot.tsx         React component
+├── index.ts           entry point for a standalone import
+├── carrot.js          placement in the mouth + createCarrot() without React
+├── carrotMotion.js    own motion: leaves, breathing, shake
+└── assets/carrot.svg  carrot SVG, approved design (unchanged)
 ```
 
-## Посадка
+## Placement
 
-В DOM морковка — отдельная группа `<g data-accessory="carrot">`, первая внутри группы головы
-собачки (`data-part="head-rig"`). Поэтому:
+In the DOM, the carrot is a separate group `<g data-accessory="carrot">`, the first one inside the dog's head group (`data-part="head-rig"`). Therefore:
 
-- голова и ушки рисуются поверх морковки: верхний край морковки уходит под мордочку, как во рту,
-  остальное — снаружи;
-- морковка лежит поверх тела и лап;
-- поворот головы и подъём при дыхании морковка получает тем же преобразованием, что и голова,
-  а смену позы повторяет по тем же данным риггинга и с той же плавностью — не скользит
-  и не отстаёт ни на кадр.
+- the head and ears are drawn over the carrot: its top edge goes under the muzzle, as if in the mouth, and the rest stays outside;
+- the carrot lies over the body and the paws;
+- it receives the head turn and the breathing lift through the same transform as the head, and follows pose changes with the same rig data and the same easing, so it never slides and never lags by a single frame.
 
-Посадку первой морковки измерили по двум референсам (`accessories/tools/fit_placement.py … carrot`).
-Текущий дизайн — та же морковка, нарисованная в 1,138 раза крупнее (109 × 43, контуры толще).
-Его масштаб 0,8785 и сдвиг подобраны так, что корнеплод и глазки ложатся точно туда же, где были
-у первой морковки: та же точка во рту, тот же размер и наклон.
+The placement of the first carrot was measured from two reference images (`accessories/tools/fit_placement.py … carrot`). The current design is the same carrot drawn 1.138 times larger (109 × 43, thicker outlines). Its scale of 0.8785 and offset are chosen so that the root and the eyes land exactly where they were on the first carrot: the same point in the mouth, the same size and the same tilt.
 
-| Поза | x | y | наклон | масштаб |
+| Pose | x | y | Rotation | Scale |
 |---|---|---|---|---|
-| 1 | 43,95 | 139,59 | −7,58° | 0,8785 |
-| 2 | 17,86 | 143,06 | 21,60° | 0,8785 |
+| 1 | 43.95 | 139.59 | −7.58° | 0.8785 |
+| 2 | 17.86 | 143.06 | 21.60° | 0.8785 |
 
-## Свои движения
+## Own motion
 
-Поверх привязки к голове. Посадка во рту при этом не меняется. Движения те же, что у первой
-морковки: точки сгиба ботвы и дыхания перенесены на новый рисунок, длина ботвы для инерции считается
-в единицах собачки — поэтому покачивание, дыхание и встряска совпадают с утверждёнными. Обводка
-корнеплода в SVG сделана маской — при дыхании маска меняется вместе с обводкой. Настройки — `CARROT_MOTION`
-в `carrotMotion.js`.
+Applied on top of the head attachment; the placement in the mouth does not change. The motion is the same as on the first carrot: the bend and breathing points of the leaves were moved onto the new drawing, and the leaf length for inertia is measured in dog units, so the sway, breathing and shake match the approved ones. The root's outline in the SVG is a mask, and the mask changes together with the outline while breathing. Settings: `CARROT_MOTION` in `carrotMotion.js`.
 
-| Движение | Как устроено |
+| Motion | How it works |
 |---|---|
-| Покачивание ботвы | Ботва медленно изгибается вокруг своего основания, ±5° на кончиках листьев, один взмах за 3-секундный блок. Изгиб нарастает от основания к кончикам, основание закреплено на морковке. |
-| Дыхание | Корнеплод чуть утолщается (до 3%) и удлиняется (до 1%) по той же кривой и в той же фазе, что дыхание собачки. Глазки и улыбка двигаются вместе с ним. |
-| Встряска при смене позы | Ботва — лёгкая быстрая пружина (3,4 колебания в секунду), её раскачивает ускорение головы. При приседании — резкое отклонение около 18°, при вставании — около 14°, затем несколько затухающих колебаний (около секунды) и снова спокойное покачивание. |
+| Leaf sway | The leaves slowly bend around their base, ±5° at the leaf tips, one swing per 3-second block. The bend grows from the base to the tips; the base stays fixed on the carrot. |
+| Breathing | The root gets slightly thicker (up to 3%) and longer (up to 1%) along the same curve and in the same phase as the dog's breathing. The eyes and the smile move with it. |
+| Shake on pose change | The leaves are a light, fast spring (3.4 oscillations per second) driven by the head's acceleration. On the crouch there is a sharp deflection of about 18°, when standing up about 14°, then a few damped oscillations (about a second) and back to the calm sway. |
 
-Встряска начинается вместе с движением головы и никогда его не опережает. Одиночные пики
-ускорения на стыках этапов позы сглажены и рывков не дают. Встряска после вставания
-продолжается в начале следующего цикла (0–1,2 с) и затихает к середине первого блока.
-Второй и третий блоки позы 1 одинаковые.
+The shake starts together with the head movement and never leads it. Single acceleration spikes at the joints between pose stages are smoothed and cause no jerks. The shake after standing up continues into the start of the next cycle (0–1.2 s) and settles by the middle of the first block. The second and third pose-1 blocks are identical.
 
-Все движения рассчитаны по времени последовательности: перемотка, пауза и любой кадр всегда
-показывают одно и то же.
+All motion is computed from the sequence time: seeking, pausing and any single frame always show the same picture, and the frame rate has no effect.
 
-## Совместимость с TGS
+## TGS compatibility
 
-Посадка — смещение, поворот и масштаб группы; свои движения — анимация контуров (path) и
-положения кружков-глаз. SVG-файл не меняется. В Lottie/TGS это отдельный слой с родителем
-«голова», ниже слоёв головы и ушей. Первый блок позы 1 с морковкой — отдельный файл (в нём
-затихает встряска после вставания), второй и третий — одинаковые.
+Placement is a group translation, rotation and scale; the own motion is path animation and the position of the eye circles. The SVG file is unchanged. In Lottie/TGS it is a separate layer parented to the head, below the head and ear layers. The first pose-1 block with the carrot is a separate file (the shake after standing up settles in it); the second and third are identical.

@@ -1,22 +1,22 @@
-# accessories — аксессуары для собачки
+# accessories — wearable accessories for the dog
 
-Аксессуары — самостоятельные компоненты. Собачка (`../mascot`) не изменяется и ничего о них не знает:
-аксессуар надевается во время работы, поверх уже нарисованной собачки, и снимается без следа.
-Каждый аксессуар лежит в своей папке и импортируется отдельно.
+Accessories are standalone components. The dog (`../mascot`) is not modified and knows nothing about them:
+an accessory is attached at runtime on top of the already rendered dog and removed without a trace.
+Each accessory lives in its own folder and is imported on its own.
 
-| Аксессуар | Папка | Компонент |
+| Accessory | Folder | Component |
 |---|---|---|
-| Новогодняя шапочка | [`head/christmas-hat/`](head/christmas-hat/) | `ChristmasHat` |
-| Бантик | [`head/bow/`](head/bow/) | `Bow` |
-| Уточка | [`head/duck/`](head/duck/) | `Duck` |
-| Сыр | [`head/cheese/`](head/cheese/) | `Cheese` |
-| Очки | [`eyes/glasses/`](eyes/glasses/) | `Glasses` |
-| Розовые очки | [`eyes/pink-glasses/`](eyes/pink-glasses/) | `PinkGlasses` |
-| Морковка во рту | [`mouth/carrot/`](mouth/carrot/) | `Carrot` |
-| Мячик во рту | [`mouth/ball/`](mouth/ball/) | `Ball` |
-| Косточка во рту | [`mouth/bone/`](mouth/bone/) | `Bone` |
+| Christmas hat | [`head/christmas-hat/`](head/christmas-hat/) | `ChristmasHat` |
+| Bow | [`head/bow/`](head/bow/) | `Bow` |
+| Duck | [`head/duck/`](head/duck/) | `Duck` |
+| Cheese | [`head/cheese/`](head/cheese/) | `Cheese` |
+| Glasses | [`eyes/glasses/`](eyes/glasses/) | `Glasses` |
+| Pink glasses | [`eyes/pink-glasses/`](eyes/pink-glasses/) | `PinkGlasses` |
+| Carrot in the mouth | [`mouth/carrot/`](mouth/carrot/) | `Carrot` |
+| Ball in the mouth | [`mouth/ball/`](mouth/ball/) | `Ball` |
+| Bone in the mouth | [`mouth/bone/`](mouth/bone/) | `Bone` |
 
-## Подключение
+## Usage
 
 ```tsx
 import { DogMascot } from '../mascot/index.js';
@@ -27,8 +27,8 @@ import { ChristmasHat } from '../accessories/head/christmas-hat';
 </ChristmasHat>
 ```
 
-Несколько аксессуаров сразу — вложением, внешним идёт `ChristmasHat`
-(`Duck`, `Cheese`, `Bow`, `Glasses`, `PinkGlasses`, `Carrot`, `Ball` и `Bone` можно вкладывать друг в друга):
+To wear several accessories at once, nest them with `ChristmasHat` as the outermost wrapper
+(`Duck`, `Cheese`, `Bow`, `Glasses`, `PinkGlasses`, `Carrot`, `Ball` and `Bone` can be nested in any order):
 
 ```tsx
 import { Carrot } from '../accessories/mouth/carrot';
@@ -40,11 +40,11 @@ import { Carrot } from '../accessories/mouth/carrot';
 </ChristmasHat>
 ```
 
-Подробности — в README папки аксессуара.
+See each accessory's README for its props, placement and motion.
 
-## Примерочная
+## Try-on page
 
-Нужен Node.js 18 или новее.
+Requires Node.js 18 or newer.
 
 ```bash
 cd accessories
@@ -52,42 +52,43 @@ npm install
 npm run dev       # http://localhost:5173
 ```
 
-На странице: Play / Pause, ползунок по всему 12-секундному циклу, быстрые переходы
-(поворот головы, приседание, поза 2, возвращение), включение и выключение каждого аксессуара,
-фоны и размеры (240, 120, 64 px). Холст примерочной шире кадра собачки 240×240: сверху 36,
-по бокам 20 и снизу 8 единиц запаса (`ROOM` в `demo/App.jsx`), чтобы аксессуары над головой
-(уточка, шапочка) были видны целиком во всём цикле. Кадр собачки 240×240 можно обвести пунктиром.
+The page has Play / Pause, a slider over the whole 12-second cycle, quick jumps
+(head turn, crouch, pose 2, return), an on/off switch for each accessory,
+backgrounds and sizes (240, 120, 64 px). The try-on canvas is larger than the dog's 240×240 frame:
+36 units of room at the top, 20 at the sides and 8 at the bottom (`ROOM` in `demo/App.jsx`), so that
+accessories above the head (the duck, the hat) stay fully visible through the whole cycle. The dog's
+240×240 frame can be outlined with a dashed line.
 
-## Состав
+## Files
 
 ```text
 accessories/
-├── head/                      аксессуары на голову
-│   ├── christmas-hat/         новогодняя шапочка (ChristmasHat.tsx, SVG, анимации)
-│   ├── bow/                   бантик (Bow.tsx, SVG, анимации)
-│   ├── duck/                  уточка (Duck.tsx, SVG, анимации)
-│   └── cheese/                сыр (Cheese.tsx, SVG, анимации)
-├── eyes/                      аксессуары для глаз
-│   ├── glasses/               очки (Glasses.tsx, SVG, анимации)
-│   └── pink-glasses/          розовые очки (PinkGlasses.tsx, SVG, анимации)
-├── mouth/                     аксессуары для рта
-│   ├── carrot/                морковка (Carrot.tsx, SVG, анимации)
-│   ├── ball/                  мячик (Ball.tsx, SVG, анимации)
-│   └── bone/                  косточка (Bone.tsx, SVG, анимации)
-├── core/                      общий движок аксессуаров
-│   ├── headAccessory.js       крепит SVG к голове собачки (над головой или под ней) и ведёт за головой
-│   ├── inertia.js             инерция (пружины от движения головы)
-│   └── pathDeform.js          деформация контуров SVG по точкам
+├── head/                      head accessories
+│   ├── christmas-hat/         Christmas hat (ChristmasHat.tsx, SVG, motion)
+│   ├── bow/                   bow (Bow.tsx, SVG, motion)
+│   ├── duck/                  duck (Duck.tsx, SVG, motion)
+│   └── cheese/                cheese (Cheese.tsx, SVG, motion)
+├── eyes/                      eye accessories
+│   ├── glasses/               glasses (Glasses.tsx, SVG, motion)
+│   └── pink-glasses/          pink glasses (PinkGlasses.tsx, SVG, motion)
+├── mouth/                     mouth accessories
+│   ├── carrot/                carrot (Carrot.tsx, SVG, motion)
+│   ├── ball/                  ball (Ball.tsx, SVG, motion)
+│   └── bone/                  bone (Bone.tsx, SVG, motion)
+├── core/                      shared accessory engine
+│   ├── headAccessory.js       attaches an SVG to the dog's head (above or below it) and makes it follow the head
+│   ├── inertia.js             inertia (springs driven by the head's movement)
+│   └── pathDeform.js          point-based deformation of SVG paths
 ├── tools/
-│   └── fit_placement.py       замер посадки по картинкам-референсам
-├── demo/                      примерочная (App.jsx, main.jsx, app.css)
-├── index.html, index.js       примерочная и общий вход
-├── package.json, vite.config.js, tsconfig.json, vite-env.d.ts
+│   └── fit_placement.py       measures placement from reference images
+├── demo/                      try-on page (App.jsx, main.jsx, app.css)
+├── index.html, index.js       try-on page and shared entry point
+└── package.json, vite.config.js, tsconfig.json, vite-env.d.ts
 ```
 
-## Новый аксессуар на голову
+## Adding a head accessory
 
-Положите его в `head/<название>/` по образцу `christmas-hat/`:
+Put it in `head/<name>/`, following `christmas-hat/`:
 
 ```js
 import { createHeadAccessory } from '../../core/headAccessory.js';
@@ -99,18 +100,17 @@ createHeadAccessory(svg, {
 });
 ```
 
-Аксессуар, который должен лежать под головой и ушками (как то, что во рту), — с `layer: 'under-head'`.
+An accessory that must sit under the head and ears (like the mouth accessories) uses `layer: 'under-head'`.
 
-Если на референсах аксессуар в позах разного размера, у позы может быть свой `scale`
-(как у бантика).
+If the accessory has a different size in the two reference poses, each pose can have its own `scale`
+(as the bow does).
 
-Значения `pose1` и `pose2` выдаёт `tools/fit_placement.py` (нужны `rsvg-convert` и Python с
-numpy, scipy, opencv-python). Последний аргумент — по каким цветам искать: `hat` (красный и
-серо-голубой), `carrot` (оранжевый и зелёный), `bow` (розовый), `ball`
-(жёлто-зелёный), `duck` (жёлтый и оранжевый), `glasses` (салатовый и зелёный), `bone`
-(кремовый и тёмно-коричневый), `cheese` (жёлтый и коричнево-оранжевый) или `pink-glasses`
-(светло- и тёмно-розовый).
-Если аксессуар закрывает глаза собачки, скриншот совмещается с ней по контуру и носу:
+The `pose1` and `pose2` values come from `tools/fit_placement.py` (requires `rsvg-convert` and Python
+with numpy, scipy and opencv-python). The last argument selects the colours to look for: `hat` (red and
+grey-blue), `carrot` (orange and green), `bow` (pink), `ball` (yellow-green), `duck` (yellow and orange),
+`glasses` (lime and green), `bone` (cream and dark brown), `cheese` (yellow and brown-orange) or
+`pink-glasses` (light and dark pink). If the accessory covers the dog's eyes, the screenshot is aligned
+with the dog by its outline and nose:
 
 ```bash
 python3 accessories/tools/fit_placement.py flower.svg mascot/assets/dog-pose-1.svg reference-pose-1.png hat

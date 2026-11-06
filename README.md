@@ -1,35 +1,32 @@
-# Telegram Mascot
+# Telegram Mascot — accessories branch
 
-Анимированный маскот для Telegram: собачка, её аксессуары и экран приложения.
+This branch contains the animated dog and its wearable accessories.
+The complete project (dog, accessories, skins and the Telegram profile screen with the Dog shop)
+is on the [`main`](https://github.com/khilolakhamid/Telegram-Mascot/tree/main) branch.
 
 ```text
 Telegram-Mascot/
-├── mascot/        собачка: SVG, анимации, React-компонент, демо
-├── accessories/   аксессуары: новогодняя шапочка, примерочная
-└── screen/        экран из Figma (следующий этап)
+├── mascot/        the animated dog: source SVGs, animation engine, React component, demo
+└── accessories/   wearable accessories (head, eyes, mouth), shared engine, try-on page
 ```
 
-## Собачка
+## Getting started
 
-Готовый компонент с программной SVG-анимацией. Он повторяет 12-секундную последовательность:
-три блока первой позы по 3 секунды, затем игривое приседание и возвращение (3 секунды).
+Requires Node.js 18 or newer.
 
 ```bash
 cd mascot
 npm install
-npm run dev
+npm run dev        # dog demo: http://localhost:5173
 ```
-
-Подробности — в [`mascot/README.md`](mascot/README.md).
-
-## Аксессуары
-
-Надеваются на собачку поверх, не меняя `mascot/`. Шапочку можно включать и выключать.
 
 ```bash
 cd accessories
 npm install
-npm run dev
+npm run dev        # accessories try-on page: http://localhost:5173
 ```
 
-Подробности — в [`accessories/README.md`](accessories/README.md).
+## Documentation
+
+- [`mascot/README.md`](mascot/README.md): the dog component and its animation
+- [`accessories/README.md`](accessories/README.md): the accessories and how to use them
