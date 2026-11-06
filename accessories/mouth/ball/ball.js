@@ -1,5 +1,5 @@
 /**
- * Ball accessory for the Telegram Mascot dog — held in the mouth.
+ * Ball accessory for the telegram-mascot dog — held in the mouth.
  *
  *   import { createBall } from '../accessories/mouth/ball';
  *   const ball = createBall(dogSvg);         // after the dog is drawn into dogSvg

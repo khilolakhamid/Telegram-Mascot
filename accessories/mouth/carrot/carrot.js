@@ -1,5 +1,5 @@
 /**
- * Carrot accessory for the Telegram Mascot dog — held in the mouth.
+ * Carrot accessory for the telegram-mascot dog — held in the mouth.
  *
  *   import { createCarrot } from '../accessories/mouth/carrot';
  *   const carrot = createCarrot(dogSvg);     // after the dog is drawn into dogSvg

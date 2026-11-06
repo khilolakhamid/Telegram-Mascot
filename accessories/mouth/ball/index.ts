@@ -1,4 +1,4 @@
-// Ball — mouth accessory for the Telegram Mascot dog. Import it on its own:
+// Ball — mouth accessory for the telegram-mascot dog. Import it on its own:
 //   import { Ball } from '<path>/accessories/mouth/ball';
 export { Ball, default } from './Ball';
 export type { BallProps } from './Ball';

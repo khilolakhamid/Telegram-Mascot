@@ -1,5 +1,5 @@
 /**
- * Pink glasses accessory for the Telegram Mascot dog — worn on the eyes.
+ * Pink glasses accessory for the telegram-mascot dog — worn on the eyes.
  *
  *   import { createPinkGlasses } from '../accessories/eyes/pink-glasses';
  *   const glasses = createPinkGlasses(dogSvg);   // after the dog is drawn into dogSvg

@@ -1,6 +1,6 @@
 # cheese — Cheese on the head
 
-A head accessory for the Telegram Mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the cheese is put on from the outside and removed without a trace.
+A head accessory for the telegram-mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the cheese is put on from the outside and removed without a trace.
 
 ## Usage
 

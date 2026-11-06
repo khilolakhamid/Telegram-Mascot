@@ -1,5 +1,5 @@
 /**
- * Christmas hat accessory for the Telegram Mascot dog.
+ * Christmas hat accessory for the telegram-mascot dog.
  *
  *   import { createChristmasHat } from '../accessories/head/christmas-hat';
  *   const hat = createChristmasHat(dogSvg);      // after the dog is drawn into dogSvg

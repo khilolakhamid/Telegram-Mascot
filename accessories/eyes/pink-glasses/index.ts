@@ -1,4 +1,4 @@
-// Pink glasses — eyes accessory for the Telegram Mascot dog. Import them on their own:
+// Pink glasses — eyes accessory for the telegram-mascot dog. Import them on their own:
 //   import { PinkGlasses } from '<path>/accessories/eyes/pink-glasses';
 export { PinkGlasses, default } from './PinkGlasses';
 export type { PinkGlassesProps } from './PinkGlasses';
