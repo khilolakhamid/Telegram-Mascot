@@ -1,0 +1,158 @@
+import { useRef, useState } from 'react';
+import { DogMascot } from '../../mascot/index.js';
+import { ChristmasHat } from '../head/christmas-hat';
+import { Carrot } from '../mouth/carrot';
+import { Bow } from '../head/bow';
+import { Ball } from '../mouth/ball';
+import { Duck } from '../head/duck';
+import { Glasses } from '../eyes/glasses';
+import { PinkGlasses } from '../eyes/pink-glasses';
+import { Bone } from '../mouth/bone';
+import { Cheese } from '../head/cheese';
+
+// Try-on page: the mascot dog (from ../mascot, unchanged) with accessories put on it.
+// Play/Pause, the full 12-second sequence on a slider, each accessory on/off, backgrounds and sizes.
+const BLOCK_NAMES = ['pose 1', 'pose 1', 'pose 1', 'play pose'];
+const STAGE_NAMES = { 'pose 1': 'pose 1', crouch: 'crouch', 'pose 2': 'pose 2', return: 'return' };
+// Preview canvas around the dog's own 240×240 frame (in dog units): room above and at the sides
+// for accessories that rise above the head while the dog moves (the duck goes up to 25.4 above
+// the frame at about 11.8 s, the hat up to 16). The dog and accessories are not scaled or moved.
+const ROOM = { top: 36, side: 20, bottom: 8 };
+
+const MARKS = [
+  [0, 'Start'], [0.6, 'Head turn'], [1.3, 'Lens glint'], [9.25, 'Crouch'], [10.5, 'Pose 2'], [11.75, 'Return']
+];
+
+export default function App() {
+  const dog = useRef(null);
+  const [playing, setPlaying] = useState(true);
+  const [glasses, setGlasses] = useState(false);
+  const [pinkGlasses, setPinkGlasses] = useState(true);
+  const [duck, setDuck] = useState(false);
+  const [ball, setBall] = useState(false);
+  const [bow, setBow] = useState(false);
+  const [carrot, setCarrot] = useState(false);
+  const [bone, setBone] = useState(false);
+  const [cheese, setCheese] = useState(false);
+  const [hat, setHat] = useState(false);
+  const [info, setInfo] = useState({ time: 0, blockIndex: 0, stage: 'pose 1' });
+  const [size, setSize] = useState(240);
+  const [showFrame, setShowFrame] = useState(false);
+  const k = size / 240;
+  const [bg, setBg] = useState('white');
+
+  const jump = t => { setPlaying(false); dog.current.seek(t); };
+
+  return (
+    <main className="player">
+      <h1>Try-on: accessories</h1>
+      <div
+        className={`stage bg-${bg}`}
+        style={{
+          width: (240 + 2 * ROOM.side) * k, height: (240 + ROOM.top + ROOM.bottom) * k,
+          paddingTop: ROOM.top * k, paddingLeft: ROOM.side * k
+        }}
+      >
+        {showFrame && (
+          <div className="dog-frame" style={{ top: ROOM.top * k, left: ROOM.side * k, width: size, height: size }} />
+        )}
+        <ChristmasHat enabled={hat}>
+          <Duck enabled={duck}>
+          <Cheese enabled={cheese}>
+            <Bow enabled={bow}>
+              <Glasses enabled={glasses}>
+                <PinkGlasses enabled={pinkGlasses}>
+                  <Carrot enabled={carrot}>
+                    <Ball enabled={ball}>
+                      <Bone enabled={bone}>
+                        <DogMascot ref={dog} size={size} playing={playing} onFrame={setInfo} />
+                      </Bone>
+                    </Ball>
+                  </Carrot>
+                </PinkGlasses>
+              </Glasses>
+            </Bow>
+          </Cheese>
+          </Duck>
+        </ChristmasHat>
+      </div>
+
+      <div className="row">
+        <button type="button" className={playing ? '' : 'primary'} disabled={playing} onClick={() => setPlaying(true)}>
+          ▶ Play
+        </button>
+        <button type="button" className={playing ? 'primary' : ''} disabled={!playing} onClick={() => setPlaying(false)}>
+          ❚❚ Pause
+        </button>
+      </div>
+
+      <div className="row" role="group" aria-label="Accessories">
+        <button type="button" className={pinkGlasses ? 'primary' : ''} aria-pressed={pinkGlasses} onClick={() => setPinkGlasses(v => !v)}>
+          🩷 Pink glasses: {pinkGlasses ? 'on' : 'off'}
+        </button>
+        <button type="button" className={cheese ? 'primary' : ''} aria-pressed={cheese} onClick={() => setCheese(v => !v)}>
+          🧀 Cheese: {cheese ? 'on' : 'off'}
+        </button>
+        <button type="button" className={bone ? 'primary' : ''} aria-pressed={bone} onClick={() => setBone(v => !v)}>
+          🦴 Bone: {bone ? 'on' : 'off'}
+        </button>
+        <button type="button" className={glasses ? 'primary' : ''} aria-pressed={glasses} onClick={() => setGlasses(v => !v)}>
+          🕶️ Green glasses: {glasses ? 'on' : 'off'}
+        </button>
+        <button type="button" className={duck ? 'primary' : ''} aria-pressed={duck} onClick={() => setDuck(v => !v)}>
+          🐥 Duck: {duck ? 'on' : 'off'}
+        </button>
+        <button type="button" className={ball ? 'primary' : ''} aria-pressed={ball} onClick={() => setBall(v => !v)}>
+          🎾 Ball: {ball ? 'on' : 'off'}
+        </button>
+        <button type="button" className={bow ? 'primary' : ''} aria-pressed={bow} onClick={() => setBow(v => !v)}>
+          🎀 Bow: {bow ? 'on' : 'off'}
+        </button>
+        <button type="button" className={carrot ? 'primary' : ''} aria-pressed={carrot} onClick={() => setCarrot(c => !c)}>
+          🥕 Carrot: {carrot ? 'on' : 'off'}
+        </button>
+        <button type="button" className={hat ? 'primary' : ''} aria-pressed={hat} onClick={() => setHat(h => !h)}>
+          🎅 Christmas hat: {hat ? 'on' : 'off'}
+        </button>
+      </div>
+
+      <label className="scrub">
+        <span>0 s</span>
+        <input
+          type="range" min="0" max="12000" value={Math.round(info.time * 1000)}
+          aria-label="Position in the sequence"
+          onChange={e => jump(e.target.value / 1000)}
+        />
+        <span>12 s</span>
+      </label>
+
+      <div className="meta">
+        {info.time.toFixed(2)} / 12.00 s · block {info.blockIndex + 1}/4 ({BLOCK_NAMES[info.blockIndex]}) · {STAGE_NAMES[info.stage] || info.stage}
+      </div>
+
+      <div className="row sizes" role="group" aria-label="Jump to moment">
+        {MARKS.map(([t, label]) => (
+          <button key={t} type="button" onClick={() => jump(t)}>{label}</button>
+        ))}
+      </div>
+
+      <div className="row sizes" role="group" aria-label="Background">
+        {[['white', 'White'], ['dark', 'Dark'], ['color', 'Colour'], ['checker', 'Transparency']].map(([k, label]) => (
+          <button key={k} type="button" className={bg === k ? 'primary' : ''} onClick={() => setBg(k)}>{label}</button>
+        ))}
+      </div>
+
+      <div className="row sizes" role="group" aria-label="Frame outline">
+        <button type="button" className={showFrame ? 'primary' : ''} aria-pressed={showFrame} onClick={() => setShowFrame(v => !v)}>
+          Dog frame 240×240: {showFrame ? 'shown' : 'hidden'}
+        </button>
+      </div>
+
+      <div className="row sizes" role="group" aria-label="Size">
+        {[240, 120, 64].map(s => (
+          <button key={s} type="button" className={size === s ? 'primary' : ''} onClick={() => setSize(s)}>{s} px</button>
+        ))}
+      </div>
+    </main>
+  );
+}

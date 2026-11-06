@@ -1,0 +1,269 @@
+:root { --stage: #E5E5EA; --screen-bg: #F2F2F7; --bezel: #0B0B0C; --rim: #3A3A3C;
+  --sheet-bg: #EFEFF3; --label: #000; --secondary: #8E8E92; --tab-active: #E0E0E5;
+  --card: #FFF; --pill: #FDF4DB; --pill-text: #C6772C; --selected: #F5BB40; --pin: #B8B8BF; --buy: #3C85F6; --apply: #0187FF;
+  --ease-sheet: cubic-bezier(.32, .72, 0, 1);       /* opening: iOS sheet curve, .5 s */
+  --ease-dismiss: cubic-bezier(.4, 0, .22, 1);      /* closing: gentle start, soft landing, .45 s */
+  --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Display", Inter, system-ui, sans-serif;
+  --font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --stage: #1C1C1E; } }
+:root[data-theme="dark"] { --stage: #1C1C1E; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--stage); overflow: hidden; -webkit-tap-highlight-color: transparent; }
+#root { width: 100%; height: 100%; }
+
+/* iPhone frame */
+.stage { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.device { position: relative; flex: none; transform-origin: center center; padding: 12px; border-radius: 67px;
+  background: var(--bezel); box-shadow: 0 0 0 2px var(--rim), 0 30px 80px rgba(0, 0, 0, .28); }
+.screen { position: relative; width: 402px; height: 874px; border-radius: 55px; overflow: hidden; background: #000;
+  clip-path: inset(0 round 55px); isolation: isolate; }
+.screen.bare { border-radius: 0; clip-path: none; transform-origin: 0 0; }
+.island { position: absolute; top: 11px; left: 50%; width: 126px; height: 37px; margin-left: -63px;
+  border-radius: 18.5px; background: #000; pointer-events: none; }
+.full { width: 100%; overflow: hidden; background: #000; }
+.full-wrap { width: 100%; height: 100%; overflow-y: auto; background: var(--stage); }
+
+/* Screen in Figma coordinates, 402 × 871 */
+.canvas { position: relative; width: 100%; aspect-ratio: 402 / 871; }
+.canvas > svg.ui { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+
+/* Animated dog next to the avatar */
+/* Gift objects in the profile header: very slow, gentle float up and down (sine-like, seamless) */
+.profile-gift { position: absolute; display: block; aspect-ratio: 1; height: auto; pointer-events: none; user-select: none;
+  will-change: transform; animation-name: profile-gift-float; animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite; animation-direction: alternate; }
+@keyframes profile-gift-float { from { transform: translateY(-1.3px); } to { transform: translateY(1.3px); } }
+/* White sparkles around the gifts: a slow float up and down and a soft twinkle, each on its own */
+.profile-sparkles { position: absolute; width: 0; height: 0; pointer-events: none; }
+.profile-spark { position: absolute; translate: -50% -50%; will-change: transform;
+  animation-name: profile-spark-float; animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite; animation-direction: alternate; }
+.profile-spark svg { display: block; width: 100%; height: 100%; will-change: transform, opacity;
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, .6));
+  animation-name: profile-spark-twinkle; animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite; animation-direction: alternate; }
+@keyframes profile-spark-float { from { transform: translateY(-2px); } to { transform: translateY(2px); } }
+@keyframes profile-spark-twinkle { from { opacity: .2; transform: scale(.65); } to { opacity: var(--o); transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .profile-gift, .profile-spark, .profile-spark svg { animation: none; }
+  .profile-spark svg { opacity: var(--o); }
+}
+.mascot-slot { position: absolute; aspect-ratio: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.mascot-slot:focus-visible { outline: 2px solid rgba(255, 255, 255, .8); outline-offset: 2px; border-radius: 12px; }
+
+/* Glass buttons (Back 44 × 44, Edit 52 × 44, radius 22) */
+.glass { position: absolute; top: calc(62 / 871 * 100%); height: calc(44 / 871 * 100%); border-radius: 999px;
+  background: rgba(255, 255, 255, .07);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, .2); }
+.glass.back { left: calc(16 / 402 * 100%); width: calc(44 / 402 * 100%); }
+.glass.edit { left: calc(334 / 402 * 100%); width: calc(52 / 402 * 100%); }
+.glass > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+
+/* ===== Phone content: presenting screen, sheet, status bar ===== */
+.phone { position: absolute; inset: 0; }
+.status-bar { position: absolute; left: 0; top: 0; width: 402px; height: 871px; pointer-events: none; z-index: 3; }
+
+/* Profile screen pushed back while the sheet is open (iOS page sheet) */
+.presenting { position: absolute; inset: 0; background: var(--screen-bg); overflow: hidden;
+  transform-origin: 50% 0; transition: transform .45s var(--ease-dismiss), border-radius .45s var(--ease-dismiss); }
+.presenting-dim { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none;
+  transition: opacity .45s var(--ease-dismiss); }
+.sheet-open .presenting { transform: translateY(54px) scale(.918); border-radius: 37px;
+  transition: transform .5s var(--ease-sheet), border-radius .5s var(--ease-sheet); }
+.sheet-open .presenting-dim { opacity: .2; pointer-events: auto; transition: opacity .5s var(--ease-sheet); }
+
+/* ===== Dog sheet (layout of Telegram "Buy a Gift") ===== */
+.sheet { position: absolute; left: 0; right: 0; top: 64px; bottom: 0; z-index: 2;
+  border-radius: 38px 38px 0 0; background: var(--sheet-bg); overflow: hidden;
+  transform: translateY(100%); visibility: hidden;
+  transition: transform .45s var(--ease-dismiss), visibility 0s linear .45s;
+  font-family: var(--font-text); color: var(--label); -webkit-font-smoothing: antialiased; }
+.sheet.is-open { transform: none; visibility: visible; transition: transform .5s var(--ease-sheet), visibility 0s; }
+.sheet-scroll { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.sheet-scroll::-webkit-scrollbar { display: none; }
+.sheet-content { padding-bottom: 34px; transition: padding-bottom .3s ease; }
+/* room for the Buy button, so it never covers the cards */
+.sheet.has-selection .sheet-content { padding-bottom: 128px; }
+
+.sheet-header { position: relative; height: 198.33px; }
+.sheet-dog { position: absolute; left: 50%; top: 45px; width: 100px; height: 100px; margin-left: -50px; }
+/* The dog's SVG may draw outside its 240 × 240 frame: a hat on the head reaches up to ~7 pt above
+   it while the head turns and bounces. The box (size and position) stays the same. */
+.sheet-dog svg, .mascot-slot svg { overflow: visible; }
+.sheet-title { position: absolute; left: 0; right: 0; top: 142.37px; margin: 0; text-align: center;
+  font: 700 28px/34px var(--font-display); letter-spacing: .1px; }
+
+.balance { position: absolute; right: 24px; top: 17.69px; display: flex; flex-direction: column; align-items: flex-end; }
+.balance-label { font: 400 14px/16px var(--font-text); }
+.balance-value { display: flex; align-items: flex-start; height: 16px; font: 600 14px/16px var(--font-text); }
+.balance-star { flex: none; margin: 1.31px 4.3px 0 0; }
+.balance-fraction { font-size: 11px; }
+
+.sheet-text { max-width: 262px; margin: 0 auto; text-align: center; font: 400 15px/20px var(--font-text); }
+
+/* Tab row: centred while it fits, scrolls sideways when it does not (no scrollbar) */
+.tabs { margin-top: 16px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs-row { display: flex; gap: 3px; width: max-content; margin: 0 auto; padding: 0 16px; }
+.tab { flex: none; white-space: nowrap; }
+.tab { height: 28px; padding: 0 13px; border: 0; border-radius: 14px; background: transparent; cursor: pointer;
+  color: var(--secondary); font: 600 14px/28px var(--font-text); -webkit-tap-highlight-color: transparent;
+  transition: background-color .2s ease; }
+.tab.is-active { background: var(--tab-active); }
+.tab:focus { outline: none; }   /* no focus ring on the tabs (Safari draws one after a tap) */
+
+.accessory-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 16px; margin-top: 19.33px; }
+.accessory-card { position: relative; height: 154px; border-radius: 15px; overflow: hidden; }
+/* white block: fills the card; when selected it shrinks inside the golden outline (card size unchanged) */
+.accessory-card-bg { position: absolute; inset: 0; border-radius: 15px; background: var(--card);
+  transition: inset .28s cubic-bezier(.3, .7, .4, 1), border-radius .28s cubic-bezier(.3, .7, .4, 1); }
+.accessory-card::before { content: ""; position: absolute; inset: 0; border-radius: 15px;
+  border: 1.5px solid var(--selected); opacity: 0; transform: scale(.97);
+  transition: opacity .2s ease, transform .28s cubic-bezier(.3, .7, .4, 1); }
+.accessory-card.is-selected::before { opacity: 1; transform: none; }
+.accessory-card.is-selected .accessory-card-bg { inset: 4px; border-radius: 11px; }
+.accessory-slot { position: absolute; left: 0; right: 0; top: 0; bottom: 50px; display: flex; align-items: center; justify-content: center; }
+.price-pill { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); height: 30px; padding: 0 11.5px;
+  display: flex; align-items: center; gap: 4.5px; border-radius: 15px; background: var(--pill); white-space: nowrap; }
+
+/* Animated sparkles (PriceSparkles): drift outward, twinkle, fade; behind the star and the price */
+.price-sparkles { position: absolute; inset: 0; pointer-events: none; }
+.spark { position: absolute; translate: -50% -50%; opacity: 0; will-change: transform, opacity;
+  animation-name: spark-drift; animation-timing-function: linear; animation-iteration-count: infinite; }
+.spark svg { display: block; width: 100%; height: 100%; will-change: transform, opacity;
+  animation-name: spark-twinkle; animation-timing-function: ease-in-out; animation-iteration-count: infinite;
+  animation-direction: alternate; }
+@keyframes spark-drift {
+  0%   { opacity: 0;                         transform: translate(0, 0) scale(.3); }
+  18%  { opacity: var(--o);                  transform: translate(calc(var(--dx) * .2), calc(var(--dy) * .2)) scale(1); }
+  50%  { opacity: calc(var(--o) * .7);       transform: translate(calc(var(--dx) * .52), calc(var(--dy) * .52)) scale(.9); }
+  72%  { opacity: var(--o);                  transform: translate(calc(var(--dx) * .76), calc(var(--dy) * .76)) scale(.8); }
+  100% { opacity: 0;                         transform: translate(var(--dx), var(--dy)) scale(.35); }
+}
+@keyframes spark-twinkle { from { opacity: .5; transform: scale(.78); } to { opacity: 1; transform: scale(1.15); } }
+.sheet:not(.is-open) .spark, .sheet:not(.is-open) .spark svg { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .spark, .spark svg { animation: none; }
+  .spark { opacity: var(--o); }
+}
+.price-star { position: relative; flex: none; }
+.price-value { position: relative; color: var(--pill-text); font: 600 11px/30px var(--font-rounded); }
+
+/* Glass close button */
+.sheet-close { position: absolute; left: 16px; top: 16px; z-index: 1; width: 44px; height: 44px; padding: 0; border: 0;
+  border-radius: 50%; cursor: pointer; background: rgba(248, 248, 252, .92);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: inset 0 0 0 1px #fff, 0 8px 40px rgba(0, 0, 0, .14); -webkit-tap-highlight-color: transparent; }
+.sheet-close svg { display: block; width: 44px; height: 44px; }
+.sheet-close:focus-visible { outline: 2px solid var(--secondary); outline-offset: 2px; }
+
+/* Wearable-accessory card */
+.accessory-card.is-pressable { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.accessory-card.is-pressable:focus-visible { outline: 2px solid var(--secondary); outline-offset: 2px; }
+
+/* Christmas hat card cover: 94 × 74 cover SVG at 62.5 × 49.2 pt, centred, 34 pt below the card top */
+.hat-cover { position: absolute; top: 34px; left: calc(50% - 30.86px); width: 62.47px; height: 49.17px; overflow: visible; }
+.hat-cover-breath { transform-box: view-box; transform-origin: 36px 36px; animation: hat-cover-breath 3s ease-in-out infinite; }
+.hat-cover-sway { transform-box: view-box; transform-origin: 63px 19px; animation: hat-cover-sway 3.6s ease-in-out infinite; }
+@keyframes hat-cover-breath { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.01, 1.025); } }
+@keyframes hat-cover-sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@media (prefers-reduced-motion: reduce) { .hat-cover-breath, .hat-cover-sway { animation: none; } }
+
+/* Buy button: blue capsule above the home indicator (34 pt safe area), fades and slides in */
+.buy-bar { position: absolute; left: 36px; right: 36px; bottom: 42px; z-index: 1; pointer-events: none;
+  opacity: 0; transform: translateY(16px); visibility: hidden;
+  transition: opacity .25s ease, transform .35s cubic-bezier(.32, .72, 0, 1), visibility 0s linear .35s; }
+.buy-bar.is-visible { opacity: 1; transform: none; visibility: visible; pointer-events: auto;
+  transition: opacity .25s ease, transform .35s cubic-bezier(.32, .72, 0, 1), visibility 0s; }
+.buy-button { display: flex; align-items: center; justify-content: center; gap: 0; width: 100%; height: 52px;
+  padding: 0 20px; border: 0; border-radius: 26px; background: var(--buy); color: #fff; cursor: pointer;
+  font: 600 16px/20px var(--font-text); letter-spacing: -.1px; -webkit-font-smoothing: antialiased;
+  box-shadow: inset 0 0 0 1px rgba(150, 205, 255, .55), 0 4px 30px rgba(0, 0, 0, .14);
+  -webkit-tap-highlight-color: transparent; }
+.buy-button:active { filter: brightness(.95); }
+/* Apply Style: same capsule, brighter blue with a light-cyan rim (as in the reference) */
+.buy-button.is-apply { background: var(--apply);
+  box-shadow: inset 0 0 0 1.5px rgba(29, 172, 251, .9), 0 4px 30px rgba(0, 0, 0, .14); }
+.buy-button:focus-visible { outline: 2px solid var(--buy); outline-offset: 3px; }
+.buy-star { width: 14.5px; height: 14.5px; margin: 0 5px 0 6px; flex: none; }
+
+/* Card covers from the accessories' own SVGs (AccessoryCover): same visual size and centre as the
+   hat cover (centre 58.6 pt below the card top), with a light loop in each accessory's character */
+.accessory-cover { position: absolute; display: block; line-height: 0; }
+.accessory-cover > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.accessory-cover g { transform-box: view-box; }
+.cover-carrot { width: 68px; height: 26.83px; left: calc(50% - 34px); top: 45.19px; }
+.cover-bow { width: 60px; height: 35.12px; left: calc(50% - 30px); top: 41.04px; }
+.cover-ball { width: 46px; height: 46px; left: calc(50% - 23px); top: 35.6px; }
+/* carrot: leaves sway around their base, the root breathes */
+.cover-carrot .cover-part-a { transform-origin: 37.56px 21.25px; animation: cover-leaves 3s ease-in-out infinite; }
+.cover-carrot .cover-part-b { transform-origin: 67.73px 21.25px; animation: cover-root 3s ease-in-out infinite; }
+@keyframes cover-leaves { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+@keyframes cover-root { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.01, 1.03); } }
+/* bow: both loops flap softly up and down around the knot, the right one slightly ahead */
+.cover-bow .cover-part-a { transform-origin: 40.85px 24.1px; animation: cover-loop-left 3s ease-in-out infinite; }
+.cover-bow .cover-part-b { transform-origin: 40.85px 24.1px; animation: cover-loop-right 3s ease-in-out infinite; animation-delay: -.18s; }
+@keyframes cover-loop-left { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes cover-loop-right { 0%, 100% { transform: rotate(4deg); } 50% { transform: rotate(-4deg); } }
+/* ball: breathes evenly and rocks a little around the point where the mouth holds it */
+.cover-ball .cover-part-a { transform-origin: 30.32px 8px; animation: cover-ball 3s ease-in-out infinite; }
+@keyframes cover-ball { 0%, 100% { transform: rotate(-3deg) scale(1); } 50% { transform: rotate(3deg) scale(1.02); } }
+/* duck: breathes and gently keeps its balance, rocking around the point where it sits */
+.cover-duck { width: 42.32px; height: 46px; left: calc(50% - 21.16px); top: 35.6px; }
+.cover-duck .cover-part-a { transform-origin: 28.5px 50.5px; animation: cover-duck 3s ease-in-out infinite; }
+@keyframes cover-duck { 0%, 100% { transform: rotate(-3deg) scale(1); } 50% { transform: rotate(3deg) scale(1.02); } }
+/* glasses: frames stay still; a quick light streak sweeps across each lens ("whoosh"),
+   left first, the right one .09 s later, at 1.4 s of every 3 s — as on the real glasses */
+.cover-glasses { width: 66px; height: 34.8px; left: calc(50% - 33px); top: 41.2px; }   /* cover file 110 × 58 */
+.cover-pink-glasses { width: 66px; height: 35.63px; left: calc(50% - 33px); top: 40.79px; }
+.cover-glasses .cover-glint, .cover-pink-glasses .cover-glint { opacity: 0; animation: cover-glint 3s linear infinite; }
+.cover-glasses .cover-glint-right, .cover-pink-glasses .cover-glint-right { animation-delay: .09s; }
+@keyframes cover-glint {
+  0%, 46.67% { opacity: 0;   transform: translate(calc(var(--px) * -26px), calc(var(--py) * -26px)); animation-timing-function: ease-in-out; }
+  55%        { opacity: .55; transform: translate(0, 0); animation-timing-function: ease-in-out; }
+  63.33%, 100% { opacity: 0; transform: translate(calc(var(--px) * 26px), calc(var(--py) * 26px)); }
+}
+/* bone: breathes evenly and rocks a little around the point where the mouth holds it */
+.cover-bone { width: 66px; height: 22.24px; left: calc(50% - 33px); top: 47.48px; }   /* cover file 92 × 31 */
+.cover-bone .cover-part-a { transform-origin: 46px 10.6px; animation: cover-bone 3s ease-in-out infinite; }
+@keyframes cover-bone { 0%, 100% { transform: rotate(-3deg) scale(1); } 50% { transform: rotate(3deg) scale(1.02); } }
+/* cheese: breathes and tips a little by inertia around the point where it lies on the head */
+.cover-cheese { width: 64px; height: 33.56px; left: calc(50% - 32px); top: 41.82px; }
+.cover-cheese .cover-part-a { transform-origin: 42px 35px; animation: cover-cheese 3s ease-in-out infinite; }
+@keyframes cover-cheese { 0%, 100% { transform: rotate(-3deg) scale(1); } 50% { transform: rotate(3deg) scale(1.02); } }
+.sheet:not(.is-open) .accessory-cover g { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .accessory-cover g { animation: none; } }
+
+
+/* Skin card cover: the live skin model, centred like the other covers */
+/* skin card covers: picture files in their own proportions, bottoms aligned so both dogs stand at one height */
+.cover-skeleton-dog { width: 68px; height: 66.51px; left: calc(50% - 34px); top: 27.62px; }   /* 85 % of 80 × 78.25, same centre */
+.cover-ufo-dog { width: 68px; height: 71.97px; left: calc(50% - 34px); top: 21.68px; }   /* 85 % of 80 × 84.67, same centre */
+.skin-cover { position: absolute; left: calc(50% - 42px); top: 16px; width: 84px; height: 84px; line-height: 0; }
+.skin-cover svg { overflow: visible; }
+
+/* Preview panel (outside the phone): Restart */
+.preview-panel { flex: none; display: flex; justify-content: center; height: 36px; margin-top: 16px; }
+.full-wrap .preview-panel { margin: 12px 0 16px; }
+.preview-restart { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 16px; border-radius: 18px;
+  border: 1px solid var(--panel-border); background: var(--panel-bg); color: var(--panel-text); cursor: pointer;
+  font: 500 14px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; }
+.preview-restart:hover { background: var(--panel-hover); }
+.preview-restart:focus-visible { outline: 2px solid var(--panel-text); outline-offset: 2px; }
+.preview-restart svg { width: 16px; height: 16px; }
+:root { --panel-bg: #fff; --panel-hover: #F2F2F7; --panel-border: rgba(0, 0, 0, .1); --panel-text: #1C1C1E; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --panel-bg: #2C2C2E; --panel-hover: #3A3A3C; --panel-border: rgba(255, 255, 255, .12); --panel-text: #F2F2F7; } }
+:root[data-theme="dark"] { --panel-bg: #2C2C2E; --panel-hover: #3A3A3C; --panel-border: rgba(255, 255, 255, .12); --panel-text: #F2F2F7; }
+
+/* Pin: on the card of what the dog wears (accessory or active skin), top left */
+.card-pin { position: absolute; left: 9px; top: 9px; width: 15px; height: 15px; fill: var(--pin); pointer-events: none; }
+/* My Stuff: square cards (same width, 1 : 1); covers keep their size, centred */
+.accessory-card.is-square { height: auto; aspect-ratio: 1; }
+.accessory-card.is-square .accessory-slot { bottom: 0; }
+
+/* Blank cards at the end of All Items: visual placeholders (white card only, no action) */
+.accessory-card.is-empty { pointer-events: none; }

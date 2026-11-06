@@ -1,58 +1,59 @@
-# mascot — анимированная собачка
+# mascot — the animated dog
 
-Самостоятельный компонент: собачка рисуется из исходных SVG и анимируется кодом
-(SVG + JavaScript, без GIF, видео и растровых кадров).
+A standalone component: the dog is drawn from its source SVGs and animated in code
+(SVG + JavaScript, no GIFs, videos or raster frames).
 
-## Запуск демо
+## Running the demo
 
-Нужен Node.js 18 или новее.
+Requires Node.js 18 or newer.
 
 ```bash
 cd mascot
 npm install
-npm run dev       # демо: http://localhost:5173
-npm run build     # сборка в mascot/dist/
+npm run dev       # demo: http://localhost:5173
+npm run build     # build into mascot/dist/
 ```
 
-На демо-странице есть кнопки Play и Pause, время в 12-секундной последовательности,
-ползунок для перехода к любому моменту и переключатель размера (240, 120 и 64 px).
+The demo page has Play and Pause buttons, the time within the 12-second sequence,
+a slider to jump to any moment and a size switch (240, 120 and 64 px).
 
-## Состав
+## Files
 
 ```text
 mascot/
 ├── assets/
-│   ├── dog-pose-1.svg        первая поза (исходник)
-│   └── dog-pose-2.svg        вторая, игривая лежачая поза (исходник)
+│   ├── dog-pose-1.svg        first pose (source)
+│   └── dog-pose-2.svg        second, playful lying pose (source)
 ├── animations/
-│   ├── dogAnimation.js       движок: сборка SVG, все движения, 12-секундная последовательность
-│   ├── poseMorph.js          морфинг контуров между позами
-│   └── dogMorphData.json     сопоставленные контуры двух поз (генерируется)
+│   ├── dogAnimation.js       engine: SVG assembly, all movements, the 12-second sequence
+│   ├── poseMorph.js          outline morphing between the poses
+│   └── dogMorphData.json     matched outlines of the two poses (generated)
 ├── components/
-│   └── DogMascot.jsx         React-компонент
+│   └── DogMascot.jsx         React component
+├── variants/                 skins: Skeleton Dog and UFO Dog (see variants/*/README.md)
 ├── tools/
-│   └── build_morph_data.py   пересборка dogMorphData.json из SVG (Python 3 + numpy)
-├── demo/                     демо-страница (App.jsx, main.jsx, app.css)
-├── index.html                вход демо-страницы
-├── index.js                  публичный вход компонента
-├── package.json              зависимости: react, react-dom; для демо — vite
+│   └── build_morph_data.py   rebuilds dogMorphData.json from the SVGs (Python 3 + numpy)
+├── demo/                     demo page (App.jsx, main.jsx, app.css)
+├── index.html                demo page entry
+├── index.js                  public component entry
+├── package.json              dependencies: react, react-dom; vite for the demo
 └── vite.config.js
 ```
 
-## Использование
+## Usage
 
 ```jsx
-import { DogMascot } from '../mascot/index.js';   // путь от вашей папки
+import { DogMascot } from '../mascot/index.js';   // path from your folder
 
-<DogMascot />                 // 240 × 240, бесконечный цикл
-<DogMascot size={120} />      // пропорционально меньше, линии тоже
-<DogMascot playing={false} /> // пауза
+<DogMascot />                 // 240 × 240, endless loop
+<DogMascot size={120} />      // proportionally smaller, lines included
+<DogMascot playing={false} /> // paused
 ```
 
-Через `ref` доступны `play()`, `pause()`, `seek(секунды)`, `isPlaying()`, `getTime()`, `duration`.
-Колбэк `onFrame({ time, blockIndex, block, stage, pose })` вызывается на каждом кадре.
+A `ref` exposes `play()`, `pause()`, `seek(seconds)`, `isPlaying()`, `getTime()` and `duration`.
+The `onFrame({ time, blockIndex, block, stage, pose })` callback runs on every frame.
 
-Без React движок подключается к любому `<svg>`:
+Without React, the engine attaches to any `<svg>`:
 
 ```js
 import { createDogAnimation } from '../mascot/index.js';
@@ -60,50 +61,49 @@ const dog = createDogAnimation(document.querySelector('svg'), { autoPlay: true }
 dog.pause(); dog.play(); dog.seek(9.5); dog.destroy();
 ```
 
-Компонент не зависит от страницы и проигрывателя. На одной странице может жить несколько
-собачек: идентификаторы градиентов и маски у каждой свои.
+The component does not depend on the page or the player. Several dogs can live on one page:
+each one has its own gradient and mask ids.
 
-## Поведение
+## Behaviour
 
-Последовательность длится 12 секунд и повторяется бесконечно. Она собрана из двух
-анимационных блоков, каждый ровно 3 секунды (лимит Telegram TGS):
+The sequence lasts 12 seconds and repeats forever. It is built from two animation blocks,
+each exactly 3 seconds long (the Telegram TGS limit):
 
-| Время | Блок | Что происходит |
+| Time | Block | What happens |
 |---|---|---|
-| 0–3 с | поза 1 | дыхание, ушки, хвост, моргание, поворот головы влево и обратно |
-| 3–6 с | поза 1 | то же |
-| 6–9 с | поза 1 | то же |
-| 9–12 с | игровая поза | 0,5 с приседание → 2 с во второй позе → 0,5 с возвращение |
+| 0–3 s | pose 1 | breathing, ears, tail, blinking, head turn to the left and back |
+| 3–6 s | pose 1 | the same |
+| 6–9 s | pose 1 | the same |
+| 9–12 s | play pose | 0.5 s crouch → 2 s in the second pose → 0.5 s return |
 
-Все периодические движения укладываются в целое число колебаний за 3 секунды, поэтому
-блоки стыкуются без рывков.
+Every periodic movement fits a whole number of oscillations into 3 seconds, so the blocks join
+without jerks.
 
-Что сохранено из доработок:
+Details of the motion:
 
-- передние лапы при смене позы поворачиваются в плече целиком, их линии остаются
-  полными и сплошными на всём переходе;
-- тень под головой отбрасывается головой: следует за её поворотом и сменой позы
-  и обрезается силуэтом корпуса;
-- моргание с разной формой закрытых глаз;
-- мягкая тень на полу (чёрный эллипс с радиальным градиентом, до 28% непрозрачности): каждый кадр
-  подстраивается под положение лап, при приседании расширяется, при возвращении сужается.
-  Фон компонента прозрачный;
-- пружинистое оседание после приседания и более активный хвост во второй позе.
+- on a pose change the front legs rotate as a whole at the shoulder; their lines stay
+  complete and solid through the entire transition;
+- the shadow under the head is cast by the head: it follows the head turn and the pose change
+  and is clipped by the body silhouette;
+- blinking with different shapes of the closed eyes;
+- a soft ground shadow (a black ellipse with a radial gradient, up to 28% opacity): it adapts to
+  the position of the paws on every frame, widens on the crouch and narrows on the return.
+  The component's background is transparent;
+- a springy settle after the crouch and a livelier tail in the second pose.
 
-Скорость, амплитуды, время этапов и порядок блоков задаются в `DOG_ANIMATION_CONFIG`
+Speed, amplitudes, stage timings and block order are set in `DOG_ANIMATION_CONFIG`
 (`animations/dogAnimation.js`).
 
-## Совместимость с TGS
+## TGS compatibility
 
-Используются только повороты, масштаб, смещения, анимация контуров (path), линейные
-и радиальные градиенты и две маски (Alpha Matte): тень обрезана по силуэту корпуса,
-внутренняя обводка носа — по форме носа. Нет выражений, эффектов, растровых изображений,
-текста, 3D и пунктиров. Экспорт в TGS — следующий этап; каждый 3-секундный блок
-экспортируется отдельно.
+Only rotation, scale, translation, path animation, linear and radial gradients and two masks
+(Alpha Matte) are used: the shadow is clipped by the body silhouette, and the inner nose outline
+by the shape of the nose. There are no expressions, effects, raster images, text, 3D or dashed lines.
+Each 3-second block can be exported as its own TGS file.
 
-## Пересборка данных морфинга
+## Rebuilding the morph data
 
-Нужна только после изменения SVG в `assets/`:
+Only needed after changing the SVGs in `assets/`:
 
 ```bash
 python3 mascot/tools/build_morph_data.py
