@@ -1,4 +1,4 @@
-// Duck — head accessory for the Telegram Mascot dog. Import it on its own:
+// Duck — head accessory for the telegram-mascot dog. Import it on its own:
 //   import { Duck } from '<path>/accessories/head/duck';
 export { Duck, default } from './Duck';
 export type { DuckProps } from './Duck';

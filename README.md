@@ -1,11 +1,11 @@
-# Telegram Mascot — accessories branch
+# telegram-mascot — accessories branch
 
 This branch contains the animated dog and its wearable accessories.
 The complete project (dog, accessories, skins and the Telegram profile screen with the Dog shop)
-is on the [`main`](https://github.com/khilolakhamid/Telegram-Mascot/tree/main) branch.
+is on the [`main`](https://github.com/khilolakhamid/telegram-mascot/tree/main) branch.
 
 ```text
-Telegram-Mascot/
+telegram-mascot/
 ├── mascot/        the animated dog: source SVGs, animation engine, React component, demo
 └── accessories/   wearable accessories (head, eyes, mouth), shared engine, try-on page
 ```

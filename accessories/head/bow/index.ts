@@ -1,4 +1,4 @@
-// Bow — head accessory for the Telegram Mascot dog. Import it on its own:
+// Bow — head accessory for the telegram-mascot dog. Import it on its own:
 //   import { Bow } from '<path>/accessories/head/bow';
 export { Bow, default } from './Bow';
 export type { BowProps } from './Bow';

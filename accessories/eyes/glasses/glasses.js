@@ -1,5 +1,5 @@
 /**
- * Glasses accessory for the Telegram Mascot dog — worn on the eyes.
+ * Glasses accessory for the telegram-mascot dog — worn on the eyes.
  *
  *   import { createGlasses } from '../accessories/eyes/glasses';
  *   const glasses = createGlasses(dogSvg);   // after the dog is drawn into dogSvg

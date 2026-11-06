@@ -1,5 +1,5 @@
 /**
- * Bone accessory for the Telegram Mascot dog — held in the mouth.
+ * Bone accessory for the telegram-mascot dog — held in the mouth.
  *
  *   import { createBone } from '../accessories/mouth/bone';
  *   const bone = createBone(dogSvg);         // after the dog is drawn into dogSvg

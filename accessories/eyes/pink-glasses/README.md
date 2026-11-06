@@ -1,6 +1,6 @@
 # pink-glasses — Pink glasses
 
-An eye accessory for the Telegram Mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the glasses are put on from the outside and removed without a trace. They are based on the green glasses ([`../glasses/`](../glasses/)): the same engine and the same motion with the same timings; only the drawing and the placement are their own. The green glasses are unchanged, and the two accessories are independent.
+An eye accessory for the telegram-mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the glasses are put on from the outside and removed without a trace. They are based on the green glasses ([`../glasses/`](../glasses/)): the same engine and the same motion with the same timings; only the drawing and the placement are their own. The green glasses are unchanged, and the two accessories are independent.
 
 ## Usage
 

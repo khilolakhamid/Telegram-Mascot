@@ -1,4 +1,4 @@
-// Carrot — mouth accessory for the Telegram Mascot dog. Import it on its own:
+// Carrot — mouth accessory for the telegram-mascot dog. Import it on its own:
 //   import { Carrot } from '<path>/accessories/mouth/carrot';
 export { Carrot, default } from './Carrot';
 export type { CarrotProps } from './Carrot';
