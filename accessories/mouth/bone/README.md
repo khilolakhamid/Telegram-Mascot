@@ -1,94 +1,84 @@
-# bone — косточка во рту
+# bone — Bone in the mouth
 
-Аксессуар для рта собачки Telegram Mascot. Отдельный компонент: собачка (`mascot/`) не меняется,
-косточка надевается на неё снаружи и убирается без следа.
+A mouth accessory for the Telegram Mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the bone is put on from the outside and removed without a trace.
 
-## Подключение
+## Usage
 
 ```tsx
-import { DogMascot } from '<путь>/mascot/index.js';
-import { Bone } from '<путь>/accessories/mouth/bone';
+import { DogMascot } from '<path>/mascot/index.js';
+import { Bone } from '<path>/accessories/mouth/bone';
 
 <Bone>
   <DogMascot size={240} />
 </Bone>
 
-<Bone enabled={false}>…</Bone>   // косточка убрана — обычная собачка
-<Bone motion={false}>…</Bone>    // без своих движений, только посадка во рту
+<Bone enabled={false}>…</Bone>   // the bone removed: the plain dog
+<Bone motion={false}>…</Bone>    // no motion of its own, placement in the mouth only
 ```
 
-С аксессуаром на голову: `<Bow><Bone><DogMascot /></Bone></Bow>`. Свои `ref` и `onFrame` на
-`DogMascot` продолжают работать.
+With a head accessory: `<Bow><Bone><DogMascot /></Bone></Bow>`.
 
-| Свойство | Тип | По умолчанию | |
+`Bone` wraps exactly one `<DogMascot />` (or another accessory wrapper). Your own `ref` and `onFrame` on `DogMascot` keep working: the accessory subscribes to the dog's frames without taking them over.
+
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `children` | `<DogMascot />` | — | собачка, которая держит косточку |
-| `enabled` | `boolean` | `true` | показана ли косточка |
-| `motion` | `boolean` | `true` | дыхание и покачивание при смене позы |
-| `className`, `style` | | | для обёртки (`<span>`, inline-block) |
+| `children` | `<DogMascot />` | — | the dog that holds the bone |
+| `enabled` | `boolean` | `true` | whether the bone is shown |
+| `motion` | `boolean` | `true` | breathing and swing on pose change |
+| `className`, `style` | | | applied to the wrapper (`<span>`, inline-block) |
 
-Без React — к собачке из `createDogAnimation`:
+Without React, attach it to a dog created with `createDogAnimation`:
 
 ```js
-import { createDogAnimation } from '<путь>/mascot/index.js';
-import { createBone } from '<путь>/accessories/mouth/bone';
+import { createDogAnimation } from '<path>/mascot/index.js';
+import { createBone } from '<path>/accessories/mouth/bone';
 
 let bone = null;
 const dog = createDogAnimation(svg, { autoPlay: false, onFrame: info => bone && bone.update(info) });
 bone = createBone(svg);
 dog.play();
 
-bone.setVisible(false);   // спрятать
-bone.destroy();           // убрать
+bone.setVisible(false);   // hide
+bone.destroy();           // remove
 ```
 
-SVG подключается как текст (`bone.svg?raw`) — это работает в Vite; в других сборщиках нужен
-аналогичный загрузчик «файл как строка».
+Pass the whole `onFrame` info (including `time`) to `update`: the accessory's own motion is computed from it.
 
-## Состав
+The SVG is imported as text (`bone.svg?raw`). This works in Vite; other bundlers need an equivalent "file as string" loader.
+
+## Files
 
 ```text
 bone/
-├── Bone.tsx          React-компонент
-├── index.ts          вход для отдельного импорта
-├── bone.js           посадка во рту + createBone() без React
-├── boneMotion.js     свои движения: дыхание и покачивание
-└── assets/bone.svg   SVG косточки (оригинал, без изменений)
+├── Bone.tsx          React component
+├── index.ts          entry point for a standalone import
+├── bone.js           placement in the mouth + createBone() without React
+├── boneMotion.js     own motion: breathing and swing
+└── assets/bone.svg   bone SVG (original, unchanged)
 ```
 
-## Посадка
+## Placement
 
-В DOM косточка — отдельная группа `<g data-accessory="bone">`, первая внутри группы головы собачки
-(`data-part="head-rig"`). Голова и ушки рисуются поверх: край мордочки перекрывает середину
-косточки, как будто собачка держит её во рту; концы лежат поверх тела и лап. Поворот головы и подъём
-при дыхании она получает тем же преобразованием, что и голова, а смену позы повторяет по тем же
-данным риггинга и с той же плавностью — не скользит и не отстаёт ни на кадр.
+In the DOM, the bone is a separate group `<g data-accessory="bone">`, the first one inside the dog's head group (`data-part="head-rig"`). The head and ears are drawn over it: the edge of the muzzle covers the middle of the bone, as if the dog holds it in its mouth; the ends lie over the body and the paws. It receives the head turn and the breathing lift through the same transform as the head, and follows pose changes with the same rig data and the same easing, so it never slides and never lags by a single frame.
 
-Расположение измерено по двум референсам (`accessories/tools/fit_placement.py … bone`):
+Placement was measured from two reference images (`accessories/tools/fit_placement.py … bone`):
 
-| Поза | x | y | наклон | масштаб |
+| Pose | x | y | Rotation | Scale |
 |---|---|---|---|---|
-| 1 | 49,12 | 128,08 | −0,04° | 1 |
-| 2 | 25,17 | 143,66 | 18,96° | 1 |
+| 1 | 49.12 | 128.08 | −0.04° | 1 |
+| 2 | 25.17 | 143.66 | 18.96° | 1 |
 
-## Свои движения
+## Own motion
 
-Поверх привязки к голове; посадка во рту при этом не меняется. Вся косточка двигается как одно
-целое (одно преобразование группы), форма не искажается. Настройки — `BONE_MOTION` в `boneMotion.js`.
+Applied on top of the head attachment; the placement in the mouth does not change. The whole bone moves as one piece (a single group transform) and its shape is never distorted. Settings: `BONE_MOTION` in `boneMotion.js`.
 
-| Движение | Как устроено |
+| Motion | How it works |
 |---|---|
-| Дыхание | Косточка равномерно увеличивается до 2 % по той же кривой и в той же фазе, что дыхание собачки. |
-| Покачивание при смене позы | Косточка слегка наклоняется вокруг середины стержня, где её держит рот, — пружина, которую раскачивает ускорение головы. При приседании и вставании — около 3,5–4°, затем несколько плавных затухающих колебаний (около 1,5 с) и возврат на место. Точка во рту остаётся на месте — косточка не выпадает и не смещается. |
+| Breathing | The bone scales up evenly by up to 2% along the same curve and in the same phase as the dog's breathing. |
+| Swing on pose change | The bone tilts slightly around the middle of the shaft, where the mouth holds it, a spring driven by the head's acceleration. On the crouch and when standing up, about 3.5–4°, then a few smooth damped oscillations (about 1.5 s) and back into place. The point in the mouth stays in place: the bone never falls out or shifts. |
 
-Покачивание начинается вместе с движением головы и никогда его не опережает. После вставания оно
-продолжается в начале следующего цикла и затихает примерно за полторы секунды. Все движения
-рассчитаны по времени последовательности: перемотка, пауза и любой кадр всегда показывают одно
-и то же.
+The swing starts together with the head movement and never leads it. After the dog stands up it continues into the start of the next cycle and settles within about one and a half seconds. All motion is computed from the sequence time: seeking, pausing and any single frame always show the same picture, and the frame rate has no effect.
 
-## Совместимость с TGS
+## TGS compatibility
 
-Посадка — смещение, поворот и масштаб группы; свои движения — поворот и масштаб ещё одной группы
-вокруг косточки. SVG-файл не меняется. В Lottie/TGS это отдельный слой с родителем «голова», ниже
-слоёв головы и ушей. Первый блок позы 1 с косточкой — отдельный файл (в нём затихает покачивание
-после вставания), второй и третий — одинаковые.
+Placement is a group translation, rotation and scale; the own motion is the rotation and scale of one more group around the bone. The SVG file is unchanged. In Lottie/TGS it is a separate layer parented to the head, below the head and ear layers. The first pose-1 block with the bone is a separate file (the swing after standing up settles in it); the second and third are identical.

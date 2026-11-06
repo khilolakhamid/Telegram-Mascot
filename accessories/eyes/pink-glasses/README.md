@@ -1,93 +1,82 @@
-# pink-glasses — розовые очки
+# pink-glasses — Pink glasses
 
-Аксессуар для глаз собачки Telegram Mascot. Отдельный компонент: собачка (`mascot/`) не меняется,
-очки надеваются на неё снаружи и снимаются без следа. Сделаны на основе зелёных очков
-([`../glasses/`](../glasses/)): тот же движок и те же движения с теми же таймингами, свои — только
-рисунок и посадка. Зелёные очки не изменены, оба аксессуара независимы.
+An eye accessory for the Telegram Mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the glasses are put on from the outside and removed without a trace. They are based on the green glasses ([`../glasses/`](../glasses/)): the same engine and the same motion with the same timings; only the drawing and the placement are their own. The green glasses are unchanged, and the two accessories are independent.
 
-## Подключение
+## Usage
 
 ```tsx
-import { DogMascot } from '<путь>/mascot/index.js';
-import { PinkGlasses } from '<путь>/accessories/eyes/pink-glasses';
+import { DogMascot } from '<path>/mascot/index.js';
+import { PinkGlasses } from '<path>/accessories/eyes/pink-glasses';
 
 <PinkGlasses>
   <DogMascot size={240} />
 </PinkGlasses>
 
-<PinkGlasses enabled={false}>…</PinkGlasses>   // очки сняты — обычная собачка
-<PinkGlasses motion={false}>…</PinkGlasses>    // без блеска и пошатывания, только посадка
+<PinkGlasses enabled={false}>…</PinkGlasses>   // the glasses removed: the plain dog
+<PinkGlasses motion={false}>…</PinkGlasses>    // no motion of their own, placement only
 ```
 
-С другими аксессуарами: `<Duck><PinkGlasses><Ball><DogMascot /></Ball></PinkGlasses></Duck>`.
-Свои `ref` и `onFrame` на `DogMascot` продолжают работать.
+`PinkGlasses` wraps exactly one `<DogMascot />` (or another accessory wrapper). Your own `ref` and `onFrame` on `DogMascot` keep working: the accessory subscribes to the dog's frames without taking them over.
 
-| Свойство | Тип | По умолчанию | |
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `children` | `<DogMascot />` | — | собачка, на которую надеваются очки |
-| `enabled` | `boolean` | `true` | надеты ли очки |
-| `motion` | `boolean` | `true` | блеск линз и пошатывание при смене позы |
-| `className`, `style` | | | для обёртки (`<span>`, inline-block) |
+| `children` | `<DogMascot />` | — | the dog that wears the glasses |
+| `enabled` | `boolean` | `true` | whether the glasses are worn |
+| `motion` | `boolean` | `true` | lens glint and wobble on pose change |
+| `className`, `style` | | | applied to the wrapper (`<span>`, inline-block) |
 
-Без React — к собачке из `createDogAnimation`:
+Without React, attach it to a dog created with `createDogAnimation`:
 
 ```js
-import { createDogAnimation } from '<путь>/mascot/index.js';
-import { createPinkGlasses } from '<путь>/accessories/eyes/pink-glasses';
+import { createDogAnimation } from '<path>/mascot/index.js';
+import { createPinkGlasses } from '<path>/accessories/eyes/pink-glasses';
 
 let glasses = null;
 const dog = createDogAnimation(svg, { autoPlay: false, onFrame: info => glasses && glasses.update(info) });
 glasses = createPinkGlasses(svg);
 dog.play();
 
-glasses.setVisible(false);   // спрятать
-glasses.destroy();           // снять
+glasses.setVisible(false);   // hide
+glasses.destroy();           // remove
 ```
 
-SVG подключается как текст (`pink-glasses.svg?raw`) — это работает в Vite; в других сборщиках
-нужен аналогичный загрузчик «файл как строка».
+Pass the whole `onFrame` info (including `time`) to `update`: the accessory's own motion is computed from it.
 
-## Состав
+The SVG is imported as text (`pink-glasses.svg?raw`). This works in Vite; other bundlers need an equivalent "file as string" loader.
+
+## Files
 
 ```text
 pink-glasses/
-├── PinkGlasses.tsx           React-компонент
-├── index.ts                  вход для отдельного импорта
-├── pinkGlasses.js            посадка на глазах + createPinkGlasses() без React
-├── pinkGlassesMotion.js      свои движения: блеск линз и пошатывание (как у зелёных очков)
-└── assets/pink-glasses.svg   SVG розовых очков (без изменений)
+├── PinkGlasses.tsx           React component
+├── index.ts                  entry point for a standalone import
+├── pinkGlasses.js            placement on the eyes + createPinkGlasses() without React
+├── pinkGlassesMotion.js      own motion: lens glint and wobble (as on the green glasses)
+└── assets/pink-glasses.svg   pink glasses SVG (unchanged)
 ```
 
-## Посадка
+## Placement
 
-В DOM очки — отдельная группа `<g data-accessory="pink-glasses">` в конце группы головы собачки
-(`data-part="head-rig"`), поверх головы и ушек. Поворот головы, подъём при дыхании и смену позы они
-повторяют вместе с головой — не скользят и не отстают ни на кадр.
+In the DOM, the glasses are a separate group `<g data-accessory="pink-glasses">` at the end of the dog's head group (`data-part="head-rig"`), drawn over the head and ears. They follow the head turn, the breathing lift and pose changes together with the head, never sliding or lagging by a single frame.
 
-Расположение измерено по двум референсам (`accessories/tools/fit_placement.py … pink-glasses`).
-Глаза собачки на референсах закрыты линзами, поэтому скриншоты совмещаются с собачкой по её серому
-контуру и носу.
+Placement was measured from two reference images (`accessories/tools/fit_placement.py … pink-glasses`). The dog's eyes are covered by the lenses in the references, so the screenshots are aligned with the dog by its grey outline and nose.
 
-| Поза | x | y | наклон | масштаб |
+| Pose | x | y | Rotation | Scale |
 |---|---|---|---|---|
-| 1 | 42,62 | 50,59 | −0,02° | 1 |
-| 2 | 44,73 | 75,86 | 19,96° | 1 |
+| 1 | 42.62 | 50.59 | −0.02° | 1 |
+| 2 | 44.73 | 75.86 | 19.96° | 1 |
 
-## Свои движения
+## Own motion
 
-Те же, что у зелёных очков, с теми же настройками (`PINK_GLASSES_MOTION` в `pinkGlassesMotion.js`).
-Своего дыхания у очков нет (как и у зелёных): вместе с головой они поднимаются при дыхании собачки.
+The same as on the green glasses, with the same settings (`PINK_GLASSES_MOTION` in `pinkGlassesMotion.js`). Like the green glasses, they have no breathing of their own: they rise with the head when the dog breathes.
 
-| Движение | Как устроено |
+| Motion | How it works |
 |---|---|
-| Блеск линз «вжух» | Та же быстрая светлая полоса, что у зелёных очков (две параллельные полоски той же формы и наклона, перенесённые в центры розовых линз), проходит по стеклу слева направо: появляется, скользит, по пути немного расширяется и исчезает (0,5 с на линзу, яркость до 55 %). Сначала по левой линзе, через 0,09 с — по правой; в каждом 3-секундном блоке в 1,4 с от начала блока. Полоса обрезана по форме линзы и лежит под оправой. Оправа, линзы и блики из SVG не меняются. |
-| Пошатывание при смене позы | Очки слегка поворачиваются вокруг переносицы — та же пружина (2,6 колебания в секунду), раскачиваемая ускорением головы: при приседании и вставании — около 3–4°, затем несколько затухающих колебаний (около секунды) и возврат на место. Никогда не опережает голову. |
+| Lens glint | The same quick light streak as on the green glasses (two parallel stripes of the same shape and slant, moved to the centres of the pink lenses) passes across the glass from left to right: it appears, slides, widens slightly on the way and fades out (0.5 s per lens, up to 55% brightness). First across the left lens, 0.09 s later across the right one; in every 3-second block at 1.4 s into the block. The streak is clipped to the lens shape and lies under the frame. The frame, lenses and highlights from the SVG are unchanged. |
+| Wobble on pose change | The glasses rotate slightly around the bridge of the nose, the same spring (2.6 oscillations per second) driven by the head's acceleration: on the crouch and when standing up, about 3–4°, then a few damped oscillations (about a second) and back into place. It never leads the head. |
 
-Все движения рассчитаны по времени последовательности: перемотка, пауза и любой кадр всегда
-показывают одно и то же.
+All motion is computed from the sequence time: seeking, pausing and any single frame always show the same picture, and the frame rate has no effect.
 
-## Совместимость с TGS
+## TGS compatibility
 
-Посадка — смещение, поворот и масштаб группы; пошатывание — поворот ещё одной группы; блеск —
-смещение, масштаб и прозрачность полос внутри маски по форме линзы (в Lottie — Alpha Matte).
-Линзы и оправа — линейные градиенты, фильтров в SVG нет. SVG-файл не меняется.
+Placement is a group translation, rotation and scale; the wobble is the rotation of one more group; the glint is the translation, scale and opacity of the stripes inside a lens-shaped mask (an Alpha Matte in Lottie). The lenses and the frame are linear gradients; the SVG has no filters. The SVG file is unchanged.

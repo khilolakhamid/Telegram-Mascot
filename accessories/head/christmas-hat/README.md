@@ -1,107 +1,94 @@
-# christmas-hat — новогодняя шапочка
+# christmas-hat — Christmas hat
 
-Аксессуар на голову для собачки Telegram Mascot. Отдельный компонент: собачка (`mascot/`)
-не меняется, шапочка надевается на неё снаружи и снимается без следа.
+A head accessory for the Telegram Mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the hat is put on from the outside and removed without a trace.
 
-## Подключение
+## Usage
 
 ```tsx
-import { DogMascot } from '<путь>/mascot/index.js';
-import { ChristmasHat } from '<путь>/accessories/head/christmas-hat';
+import { DogMascot } from '<path>/mascot/index.js';
+import { ChristmasHat } from '<path>/accessories/head/christmas-hat';
 
 <ChristmasHat>
   <DogMascot size={240} />
 </ChristmasHat>
 
-<ChristmasHat enabled={false}>…</ChristmasHat>   // шапочка снята — обычная собачка
-<ChristmasHat motion={false}>…</ChristmasHat>    // без живости ткани, только посадка
+<ChristmasHat enabled={false}>…</ChristmasHat>   // the hat removed: the plain dog
+<ChristmasHat motion={false}>…</ChristmasHat>    // no fabric motion, placement only
 ```
 
-`ChristmasHat` оборачивает ровно один `<DogMascot />`. Свои `ref` и `onFrame` на `DogMascot`
-продолжают работать: шапочка подписывается на кадры собачки, не забирая их.
+`ChristmasHat` wraps exactly one `<DogMascot />` (or another accessory wrapper). Your own `ref` and `onFrame` on `DogMascot` keep working: the accessory subscribes to the dog's frames without taking them over.
 
-| Свойство | Тип | По умолчанию | |
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `children` | `<DogMascot />` | — | собачка, на которую надевается шапочка |
-| `enabled` | `boolean` | `true` | надета ли шапочка |
-| `motion` | `boolean` | `true` | покачивание, дыхание, подпрыгивание |
-| `className`, `style` | | | для обёртки (`<span>`, inline-block) |
+| `children` | `<DogMascot />` | — | the dog that wears the hat |
+| `enabled` | `boolean` | `true` | whether the hat is worn |
+| `motion` | `boolean` | `true` | sway, breathing and bounce |
+| `className`, `style` | | | applied to the wrapper (`<span>`, inline-block) |
 
-Без React — к собачке из `createDogAnimation`:
+Without React, attach it to a dog created with `createDogAnimation`:
 
 ```js
-import { createDogAnimation } from '<путь>/mascot/index.js';
-import { createChristmasHat } from '<путь>/accessories/head/christmas-hat';
+import { createDogAnimation } from '<path>/mascot/index.js';
+import { createChristmasHat } from '<path>/accessories/head/christmas-hat';
 
 let hat = null;
 const dog = createDogAnimation(svg, { autoPlay: false, onFrame: info => hat && hat.update(info) });
 hat = createChristmasHat(svg);
 dog.play();
 
-hat.setVisible(false);   // спрятать
-hat.destroy();           // снять
+hat.setVisible(false);   // hide
+hat.destroy();           // remove
 ```
 
-В `update` передаётся весь `info` из `onFrame` (с `time`): по нему считается живость ткани.
+Pass the whole `onFrame` info (including `time`) to `update`: the accessory's own motion is computed from it.
 
-SVG подключается как текст (`christmas-hat.svg?raw`) — это работает в Vite; в других сборщиках
-нужен аналогичный загрузчик «файл как строка».
+The SVG is imported as text (`christmas-hat.svg?raw`). This works in Vite; other bundlers need an equivalent "file as string" loader.
 
-## Состав
+## Files
 
 ```text
 christmas-hat/
-├── ChristmasHat.tsx          React-компонент
-├── index.ts                  вход для отдельного импорта
-├── christmasHat.js           посадка на голову + createChristmasHat() без React
-├── christmasHatMotion.js     живость ткани: кончик, дыхание, подпрыгивание
-└── assets/christmas-hat.svg  утверждённый SVG шапочки
+├── ChristmasHat.tsx          React component
+├── index.ts                  entry point for a standalone import
+├── christmasHat.js           placement on the head + createChristmasHat() without React
+├── christmasHatMotion.js     fabric motion: tip, breathing, bounce
+└── assets/christmas-hat.svg  approved hat SVG
 ```
 
-Общий движок для аксессуаров на голову — в `accessories/core/`.
+The shared engine for head accessories lives in `accessories/core/`.
 
-## Посадка
+## Placement
 
-В DOM шапочка — отдельная группа `<g data-accessory="christmas-hat">` внутри группы головы
-собачки (`data-part="head-rig"`). Поворот головы и подъём при дыхании она получает тем же
-преобразованием, что и голова. Смену позы повторяет по тем же данным риггинга и с той же
-плавностью, что голова: не опережает и не отстаёт ни на кадр.
+In the DOM, the hat is a separate group `<g data-accessory="christmas-hat">` inside the dog's head group (`data-part="head-rig"`). It receives the head turn and the breathing lift through the same transform as the head, and follows pose changes with the same rig data and the same easing as the head, never leading or lagging by a single frame.
 
-Расположение измерено по двум референсам (`accessories/tools/fit_placement.py`):
+Placement was measured from two reference images (`accessories/tools/fit_placement.py`):
 
-| Поза | x | y | наклон | масштаб |
+| Pose | x | y | Rotation | Scale |
 |---|---|---|---|---|
-| 1 | 72,32 | 0,00 | 0° | 1 |
-| 2 | 88,62 | 35,56 | 23,18° | 1 |
+| 1 | 72.32 | 0.00 | 0° | 1 |
+| 2 | 88.62 | 35.56 | 23.18° | 1 |
 
-Шапочка рисуется поверх головы и ушек.
+The hat is drawn over the head and ears.
 
-## Живость ткани
+## Fabric motion
 
-Настройки — `CHRISTMAS_HAT_MOTION` в `christmasHatMotion.js`.
+Settings: `CHRISTMAS_HAT_MOTION` in `christmasHatMotion.js`.
 
-| Движение | Как устроено |
+| Motion | How it works |
 |---|---|
-| Покачивание кончика | Кончик медленно изгибается влево-вправо, ±4,5° у помпона, один взмах за 3-секундный блок. Изгиб нарастает от сгиба к помпону, основание неподвижно. В игровой позе амплитуда на 30% больше. |
-| Дыхание | Тулья чуть вытягивается (до 3% высоты) и расширяется (до 1,2%) по той же кривой и в той же фазе, что дыхание собачки. Помпон «дышит» на 2%. |
-| Подпрыгивание при смене позы | Тулья и кончик — затухающие пружины, их раскачивает ускорение головы. При приседании и возвращении тулья запаздывает, подпрыгивает (не больше 7% высоты) и оседает, кончик догоняет с инерцией. |
-| Прыжок после возвращения | Когда собачка встала обратно в позу 1, шапочка ещё раз подпрыгивает (около 3 px), чуть оседает и успокаивается за 0,6 с. Кончик качается вслед. |
+| Tip sway | The tip slowly bends left and right, ±4.5° at the pom-pom, one swing per 3-second block. The bend grows from the fold to the pom-pom; the base stays still. In the play pose the amplitude is 30% larger. |
+| Breathing | The crown stretches slightly (up to 3% of its height) and widens (up to 1.2%) along the same curve and in the same phase as the dog's breathing. The pom-pom "breathes" by 2%. |
+| Bounce on pose change | The crown and the tip are damped springs driven by the head's acceleration. On the crouch and the return the crown lags, bounces (no more than 7% of its height) and settles; the tip follows with inertia. |
+| Hop after the return | When the dog is back in pose 1, the hat hops once more (about 3 px), settles slightly and comes to rest within 0.6 s. The tip swings along. |
 
-Опушка, которая сидит на голове, не двигается никогда: шапочка не отрывается и не съезжает
-с посадки, двигается только ткань выше опушки.
+The fur brim that sits on the head never moves: the hat never lifts off or slips; only the fabric above the brim moves.
 
-Все движения рассчитаны по времени последовательности: перемотка, пауза и любой кадр всегда
-показывают одно и то же, частота кадров ни на что не влияет.
+All motion is computed from the sequence time: seeking, pausing and any single frame always show the same picture, and the frame rate has no effect.
 
-## Совместимость с TGS
+## TGS compatibility
 
-Посадка — смещение, поворот и масштаб группы; живость — анимация контуров (path) и трансформ
-помпона. Заливки и обводки, без масок и эффектов. В Lottie/TGS это отдельный слой с родителем
-«голова». Подпрыгивание затухает внутри своего 3-секундного блока. Прыжок после возвращения
-идёт в первые 0,6 с блока после игровой позы: этот блок с шапочкой — отдельный файл,
-второй и третий блоки позы 1 одинаковые.
+Placement is a group translation, rotation and scale; the fabric motion is path animation plus a pom-pom transform. Fills and strokes only, no masks or effects. In Lottie/TGS it is a separate layer parented to the head. The bounce settles within its own 3-second block. The hop after the return happens in the first 0.6 s of the block after the play pose, so that block with the hat is a separate file; the second and third pose-1 blocks are identical.
 
-## Дизайн
+## Design
 
-`assets/christmas-hat.svg` — утверждённый вариант: исходный SVG, в котором цвет `#EDF0F2`
-(заливка опушки и помпона) заменён на `#DEE6EB`.
+`assets/christmas-hat.svg` is the approved version: the original SVG with the colour `#EDF0F2` (the fill of the brim and the pom-pom) replaced by `#DEE6EB`.

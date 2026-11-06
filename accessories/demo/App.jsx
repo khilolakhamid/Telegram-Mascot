@@ -12,15 +12,15 @@ import { Cheese } from '../head/cheese';
 
 // Try-on page: the mascot dog (from ../mascot, unchanged) with accessories put on it.
 // Play/Pause, the full 12-second sequence on a slider, each accessory on/off, backgrounds and sizes.
-const BLOCK_NAMES = ['поза 1', 'поза 1', 'поза 1', 'игровая поза'];
-const STAGE_NAMES = { 'pose 1': 'поза 1', crouch: 'приседание', 'pose 2': 'поза 2', return: 'возвращение' };
+const BLOCK_NAMES = ['pose 1', 'pose 1', 'pose 1', 'play pose'];
+const STAGE_NAMES = { 'pose 1': 'pose 1', crouch: 'crouch', 'pose 2': 'pose 2', return: 'return' };
 // Preview canvas around the dog's own 240×240 frame (in dog units): room above and at the sides
 // for accessories that rise above the head while the dog moves (the duck goes up to 25.4 above
 // the frame at about 11.8 s, the hat up to 16). The dog and accessories are not scaled or moved.
 const ROOM = { top: 36, side: 20, bottom: 8 };
 
 const MARKS = [
-  [0, 'Начало'], [0.6, 'Поворот головы'], [1.3, 'Блеск линз'], [9.25, 'Приседание'], [10.5, 'Поза 2'], [11.75, 'Возвращение']
+  [0, 'Start'], [0.6, 'Head turn'], [1.3, 'Lens glint'], [9.25, 'Crouch'], [10.5, 'Pose 2'], [11.75, 'Return']
 ];
 
 export default function App() {
@@ -45,7 +45,7 @@ export default function App() {
 
   return (
     <main className="player">
-      <h1>Примерка: розовые очки</h1>
+      <h1>Try-on: accessories</h1>
       <div
         className={`stage bg-${bg}`}
         style={{
@@ -86,69 +86,69 @@ export default function App() {
         </button>
       </div>
 
-      <div className="row" role="group" aria-label="Аксессуары">
+      <div className="row" role="group" aria-label="Accessories">
         <button type="button" className={pinkGlasses ? 'primary' : ''} aria-pressed={pinkGlasses} onClick={() => setPinkGlasses(v => !v)}>
-          🩷 Розовые очки: {pinkGlasses ? 'вкл' : 'выкл'}
+          🩷 Pink glasses: {pinkGlasses ? 'on' : 'off'}
         </button>
         <button type="button" className={cheese ? 'primary' : ''} aria-pressed={cheese} onClick={() => setCheese(v => !v)}>
-          🧀 Сыр: {cheese ? 'вкл' : 'выкл'}
+          🧀 Cheese: {cheese ? 'on' : 'off'}
         </button>
         <button type="button" className={bone ? 'primary' : ''} aria-pressed={bone} onClick={() => setBone(v => !v)}>
-          🦴 Косточка: {bone ? 'вкл' : 'выкл'}
+          🦴 Bone: {bone ? 'on' : 'off'}
         </button>
         <button type="button" className={glasses ? 'primary' : ''} aria-pressed={glasses} onClick={() => setGlasses(v => !v)}>
-          🕶️ Зелёные очки: {glasses ? 'вкл' : 'выкл'}
+          🕶️ Green glasses: {glasses ? 'on' : 'off'}
         </button>
         <button type="button" className={duck ? 'primary' : ''} aria-pressed={duck} onClick={() => setDuck(v => !v)}>
-          🐥 Уточка: {duck ? 'вкл' : 'выкл'}
+          🐥 Duck: {duck ? 'on' : 'off'}
         </button>
         <button type="button" className={ball ? 'primary' : ''} aria-pressed={ball} onClick={() => setBall(v => !v)}>
-          🎾 Мячик: {ball ? 'вкл' : 'выкл'}
+          🎾 Ball: {ball ? 'on' : 'off'}
         </button>
         <button type="button" className={bow ? 'primary' : ''} aria-pressed={bow} onClick={() => setBow(v => !v)}>
-          🎀 Бантик: {bow ? 'вкл' : 'выкл'}
+          🎀 Bow: {bow ? 'on' : 'off'}
         </button>
         <button type="button" className={carrot ? 'primary' : ''} aria-pressed={carrot} onClick={() => setCarrot(c => !c)}>
-          🥕 Морковка: {carrot ? 'вкл' : 'выкл'}
+          🥕 Carrot: {carrot ? 'on' : 'off'}
         </button>
         <button type="button" className={hat ? 'primary' : ''} aria-pressed={hat} onClick={() => setHat(h => !h)}>
-          🎅 Шапочка: {hat ? 'вкл' : 'выкл'}
+          🎅 Christmas hat: {hat ? 'on' : 'off'}
         </button>
       </div>
 
       <label className="scrub">
-        <span>0 с</span>
+        <span>0 s</span>
         <input
           type="range" min="0" max="12000" value={Math.round(info.time * 1000)}
-          aria-label="Положение в последовательности"
+          aria-label="Position in the sequence"
           onChange={e => jump(e.target.value / 1000)}
         />
-        <span>12 с</span>
+        <span>12 s</span>
       </label>
 
       <div className="meta">
-        {info.time.toFixed(2)} / 12.00 s · блок {info.blockIndex + 1}/4 ({BLOCK_NAMES[info.blockIndex]}) · {STAGE_NAMES[info.stage] || info.stage}
+        {info.time.toFixed(2)} / 12.00 s · block {info.blockIndex + 1}/4 ({BLOCK_NAMES[info.blockIndex]}) · {STAGE_NAMES[info.stage] || info.stage}
       </div>
 
-      <div className="row sizes" role="group" aria-label="Переход к моменту">
+      <div className="row sizes" role="group" aria-label="Jump to moment">
         {MARKS.map(([t, label]) => (
           <button key={t} type="button" onClick={() => jump(t)}>{label}</button>
         ))}
       </div>
 
-      <div className="row sizes" role="group" aria-label="Фон под компонентом">
-        {[['white', 'Белый'], ['dark', 'Тёмный'], ['color', 'Цветной'], ['checker', 'Прозрачность']].map(([k, label]) => (
+      <div className="row sizes" role="group" aria-label="Background">
+        {[['white', 'White'], ['dark', 'Dark'], ['color', 'Colour'], ['checker', 'Transparency']].map(([k, label]) => (
           <button key={k} type="button" className={bg === k ? 'primary' : ''} onClick={() => setBg(k)}>{label}</button>
         ))}
       </div>
 
-      <div className="row sizes" role="group" aria-label="Рамка кадра">
+      <div className="row sizes" role="group" aria-label="Frame outline">
         <button type="button" className={showFrame ? 'primary' : ''} aria-pressed={showFrame} onClick={() => setShowFrame(v => !v)}>
-          Кадр собачки 240×240: {showFrame ? 'показан' : 'скрыт'}
+          Dog frame 240×240: {showFrame ? 'shown' : 'hidden'}
         </button>
       </div>
 
-      <div className="row sizes" role="group" aria-label="Размер">
+      <div className="row sizes" role="group" aria-label="Size">
         {[240, 120, 64].map(s => (
           <button key={s} type="button" className={size === s ? 'primary' : ''} onClick={() => setSize(s)}>{s} px</button>
         ))}

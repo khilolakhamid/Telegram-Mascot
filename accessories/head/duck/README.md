@@ -1,102 +1,87 @@
-# duck — уточка на голове
+# duck — Duck on the head
 
-Аксессуар на голову собачки Telegram Mascot. Отдельный компонент: собачка (`mascot/`) не меняется,
-уточка надевается на неё снаружи и снимается без следа.
+A head accessory for the Telegram Mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the duck is put on from the outside and removed without a trace.
 
-## Подключение
+## Usage
 
 ```tsx
-import { DogMascot } from '<путь>/mascot/index.js';
-import { Duck } from '<путь>/accessories/head/duck';
+import { DogMascot } from '<path>/mascot/index.js';
+import { Duck } from '<path>/accessories/head/duck';
 
 <Duck>
   <DogMascot size={240} />
 </Duck>
 
-<Duck enabled={false}>…</Duck>   // уточка снята — обычная собачка
-<Duck motion={false}>…</Duck>    // без своих движений, только посадка на голове
+<Duck enabled={false}>…</Duck>   // the duck removed: the plain dog
+<Duck motion={false}>…</Duck>    // no motion of its own, placement on the head only
 ```
 
-С аксессуаром для рта: `<Duck><Ball><DogMascot /></Ball></Duck>`. Свои `ref` и `onFrame` на
-`DogMascot` продолжают работать.
+With a mouth accessory: `<Duck><Ball><DogMascot /></Ball></Duck>`.
 
-| Свойство | Тип | По умолчанию | |
+`Duck` wraps exactly one `<DogMascot />` (or another accessory wrapper). Your own `ref` and `onFrame` on `DogMascot` keep working: the accessory subscribes to the dog's frames without taking them over.
+
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `children` | `<DogMascot />` | — | собачка, на которой сидит уточка |
-| `enabled` | `boolean` | `true` | сидит ли уточка |
-| `motion` | `boolean` | `true` | дыхание, балансирование, качание при смене позы |
-| `className`, `style` | | | для обёртки (`<span>`, inline-block) |
+| `children` | `<DogMascot />` | — | the dog the duck sits on |
+| `enabled` | `boolean` | `true` | whether the duck is shown |
+| `motion` | `boolean` | `true` | breathing, balancing, swing on pose change |
+| `className`, `style` | | | applied to the wrapper (`<span>`, inline-block) |
 
-Без React — к собачке из `createDogAnimation`:
+Without React, attach it to a dog created with `createDogAnimation`:
 
 ```js
-import { createDogAnimation } from '<путь>/mascot/index.js';
-import { createDuck } from '<путь>/accessories/head/duck';
+import { createDogAnimation } from '<path>/mascot/index.js';
+import { createDuck } from '<path>/accessories/head/duck';
 
 let duck = null;
 const dog = createDogAnimation(svg, { autoPlay: false, onFrame: info => duck && duck.update(info) });
 duck = createDuck(svg);
 dog.play();
 
-duck.setVisible(false);   // спрятать
-duck.destroy();           // снять
+duck.setVisible(false);   // hide
+duck.destroy();           // remove
 ```
 
-SVG подключается как текст (`duck.svg?raw`) — это работает в Vite; в других сборщиках нужен
-аналогичный загрузчик «файл как строка».
+Pass the whole `onFrame` info (including `time`) to `update`: the accessory's own motion is computed from it.
 
-## Состав
+The SVG is imported as text (`duck.svg?raw`). This works in Vite; other bundlers need an equivalent "file as string" loader.
+
+## Files
 
 ```text
 duck/
-├── Duck.tsx          React-компонент
-├── index.ts          вход для отдельного импорта
-├── duck.js           посадка на голове + createDuck() без React
-├── duckMotion.js     свои движения: дыхание, балансирование, качание
-└── assets/duck.svg   SVG уточки (оригинал, без изменений)
+├── Duck.tsx          React component
+├── index.ts          entry point for a standalone import
+├── duck.js           placement on the head + createDuck() without React
+├── duckMotion.js     own motion: breathing, balancing, swing
+└── assets/duck.svg   duck SVG (original, unchanged)
 ```
 
-## Посадка
+## Placement
 
-В DOM уточка — отдельная группа `<g data-accessory="duck">` в конце группы головы собачки
-(`data-part="head-rig"`), поверх головы и ушек. Поворот головы и подъём при дыхании она получает
-тем же преобразованием, что и голова, а смену позы повторяет по тем же данным риггинга и с той же
-плавностью — не скользит и не отстаёт ни на кадр.
+In the DOM, the duck is a separate group `<g data-accessory="duck">` at the end of the dog's head group (`data-part="head-rig"`), drawn over the head and ears. It receives the head turn and the breathing lift through the same transform as the head, and follows pose changes with the same rig data and the same easing, so it never slides and never lags by a single frame.
 
-Расположение измерено по двум референсам (`accessories/tools/fit_placement.py … duck`):
+Placement was measured from two reference images (`accessories/tools/fit_placement.py … duck`):
 
-| Поза | x | y | наклон | масштаб |
+| Pose | x | y | Rotation | Scale |
 |---|---|---|---|---|
-| 1 | 63,36 | −2,94 | −12,73° | 1 |
-| 2 | 76,83 | 27,53 | −0,05° | 1 |
+| 1 | 63.36 | −2.94 | −12.73° | 1 |
+| 2 | 76.83 | 27.53 | −0.05° | 1 |
 
-**Рамка кадра.** В позе 1 уточка сидит у самого верхнего края кадра собачки 240×240, а когда
-голова поднимается (поворот головы, вставание) и уточка качается, она выходит за него — до 25 px
-около 11,8 с. Внутри кадра 240×240 эта часть срезалась бы, поэтому у примерочной есть запас
-вокруг кадра собачки; на экране iPhone и при экспорте в TGS нужен такой же запас сверху.
+**Frame bounds.** In pose 1 the duck sits right at the top edge of the dog's 240×240 frame, and when the head rises (head turn, standing up) and the duck swings, it goes beyond it, up to 25 px at about 11.8 s. Inside a 240×240 frame that part would be clipped, so the try-on page leaves room around the dog's frame; the iPhone screen and a TGS export need the same room at the top.
 
-## Свои движения
+## Own motion
 
-Поверх привязки к голове; посадка при этом не меняется. Вся уточка двигается как одно целое
-(одно преобразование группы), вокруг точки, где она сидит на голове, — поэтому она не отрывается
-и не скользит. Мягкая тень под уточкой (размытый эллипс в SVG) остаётся на голове.
-Настройки — `DUCK_MOTION` в `duckMotion.js`.
+Applied on top of the head attachment; the placement itself does not change. The whole duck moves as one piece (a single group transform) around the point where it sits on the head, so it never lifts off or slides. The soft shadow under the duck (a blurred ellipse in the SVG) stays on the head. Settings: `DUCK_MOTION` in `duckMotion.js`.
 
-| Движение | Как устроено |
+| Motion | How it works |
 |---|---|
-| Дыхание | Уточка равномерно увеличивается до 2 % от точки, где сидит, по той же кривой и в той же фазе, что дыхание собачки. |
-| Балансирование | Мягкое покачивание из стороны в сторону, ±3°, один взмах за 3-секундный блок. |
-| Качание при смене позы | Уточка — пружинистый маятник на голове (3 колебания в секунду), её раскачивает ускорение головы. При приседании и вставании — заметный наклон около 10°, затем несколько затухающих колебаний (около секунды) и возврат в исходное положение. На спокойный поворот головы она реагирует слабо. |
+| Breathing | The duck scales up evenly by up to 2% from the point where it sits, along the same curve and in the same phase as the dog's breathing. |
+| Balancing | A gentle side-to-side sway, ±3°, one swing per 3-second block. |
+| Swing on pose change | The duck is a springy pendulum on the head (3 oscillations per second) driven by the head's acceleration. On the crouch and when standing up it tilts noticeably, about 10°, then a few damped oscillations (about a second) and back to its resting position. It reacts only slightly to the calm head turn. |
 
-Качание начинается вместе с движением головы и никогда его не опережает. После вставания оно
-продолжается в начале следующего цикла и затихает примерно за секунду. Все движения рассчитаны
-по времени последовательности: перемотка, пауза и любой кадр всегда показывают одно и то же.
+The swing starts together with the head movement and never leads it. After the dog stands up it continues into the start of the next cycle and settles within about a second. All motion is computed from the sequence time: seeking, pausing and any single frame always show the same picture, and the frame rate has no effect.
 
-## Совместимость с TGS
+## TGS compatibility
 
-Посадка — смещение, поворот и масштаб группы; свои движения — поворот и масштаб ещё одной группы
-вокруг уточки. SVG-файл не меняется. В SVG уточки тень сделана размытием (`feGaussianBlur`):
-в Lottie/TGS это эффект Gaussian Blur — Telegram его поддерживает, но при экспорте его стоит
-проверить. В Lottie/TGS уточка — отдельный слой с родителем «голова», над слоями головы и ушей.
-Первый блок позы 1 с уточкой — отдельный файл (в нём затихает качание после вставания),
-второй и третий — одинаковые.
+Placement is a group translation, rotation and scale; the own motion is the rotation and scale of one more group around the duck. The SVG file is unchanged. The duck's shadow in the SVG is a blur (`feGaussianBlur`); in Lottie/TGS that is the Gaussian Blur effect, which Telegram supports, but it should be checked on export. In Lottie/TGS the duck is a separate layer parented to the head, above the head and ear layers. The first pose-1 block with the duck is a separate file (the swing after standing up settles in it); the second and third are identical.

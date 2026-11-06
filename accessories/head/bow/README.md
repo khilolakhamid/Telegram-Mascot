@@ -1,94 +1,86 @@
-# bow — бантик
+# bow — Bow
 
-Аксессуар на голову собачки Telegram Mascot. Отдельный компонент: собачка (`mascot/`) не меняется,
-бантик надевается на неё снаружи и снимается без следа.
+A head accessory for the Telegram Mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the bow is put on from the outside and removed without a trace.
 
-## Подключение
+## Usage
 
 ```tsx
-import { DogMascot } from '<путь>/mascot/index.js';
-import { Bow } from '<путь>/accessories/head/bow';
+import { DogMascot } from '<path>/mascot/index.js';
+import { Bow } from '<path>/accessories/head/bow';
 
 <Bow>
   <DogMascot size={240} />
 </Bow>
 
-<Bow enabled={false}>…</Bow>   // бантик снят — обычная собачка
-<Bow motion={false}>…</Bow>    // без своих движений, только посадка на голове
+<Bow enabled={false}>…</Bow>   // the bow removed: the plain dog
+<Bow motion={false}>…</Bow>    // no motion of its own, placement on the head only
 ```
 
-Вместе с морковкой: `<Bow><Carrot><DogMascot /></Carrot></Bow>`. `Bow` оборачивает ровно один
-`<DogMascot />` (или другой аксессуар-обёртку); свои `ref` и `onFrame` на `DogMascot` продолжают работать.
+Together with the carrot: `<Bow><Carrot><DogMascot /></Carrot></Bow>`.
 
-| Свойство | Тип | По умолчанию | |
+`Bow` wraps exactly one `<DogMascot />` (or another accessory wrapper). Your own `ref` and `onFrame` on `DogMascot` keep working: the accessory subscribes to the dog's frames without taking them over.
+
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `children` | `<DogMascot />` | — | собачка, на которую надевается бантик |
-| `enabled` | `boolean` | `true` | надет ли бантик |
-| `motion` | `boolean` | `true` | покачивание и встряска половинок |
-| `className`, `style` | | | для обёртки (`<span>`, inline-block) |
+| `children` | `<DogMascot />` | — | the dog that wears the bow |
+| `enabled` | `boolean` | `true` | whether the bow is worn |
+| `motion` | `boolean` | `true` | sway and shake of the loops |
+| `className`, `style` | | | applied to the wrapper (`<span>`, inline-block) |
 
-Без React — к собачке из `createDogAnimation`:
+Without React, attach it to a dog created with `createDogAnimation`:
 
 ```js
-import { createDogAnimation } from '<путь>/mascot/index.js';
-import { createBow } from '<путь>/accessories/head/bow';
+import { createDogAnimation } from '<path>/mascot/index.js';
+import { createBow } from '<path>/accessories/head/bow';
 
 let bow = null;
 const dog = createDogAnimation(svg, { autoPlay: false, onFrame: info => bow && bow.update(info) });
 bow = createBow(svg);
 dog.play();
 
-bow.setVisible(false);   // спрятать
-bow.destroy();           // снять
+bow.setVisible(false);   // hide
+bow.destroy();           // remove
 ```
 
-SVG подключается как текст (`bow.svg?raw`) — это работает в Vite; в других сборщиках нужен
-аналогичный загрузчик «файл как строка».
+Pass the whole `onFrame` info (including `time`) to `update`: the accessory's own motion is computed from it.
 
-## Состав
+The SVG is imported as text (`bow.svg?raw`). This works in Vite; other bundlers need an equivalent "file as string" loader.
+
+## Files
 
 ```text
 bow/
-├── Bow.tsx          React-компонент
-├── index.ts         вход для отдельного импорта
-├── bow.js           посадка на голове + createBow() без React
-├── bowMotion.js     свои движения: покачивание и встряска половинок
-└── assets/bow.svg   SVG бантика (оригинал, без изменений)
+├── Bow.tsx          React component
+├── index.ts         entry point for a standalone import
+├── bow.js           placement on the head + createBow() without React
+├── bowMotion.js     own motion: sway and shake of the loops
+└── assets/bow.svg   bow SVG (original, unchanged)
 ```
 
-## Посадка
+## Placement
 
-В DOM бантик — отдельная группа `<g data-accessory="bow">` в конце группы головы собачки
-(`data-part="head-rig"`), поверх головы и ушек. Поворот головы и подъём при дыхании он получает тем
-же преобразованием, что и голова, а смену позы повторяет по тем же данным риггинга и с той же
-плавностью — не скользит и не отстаёт ни на кадр.
+In the DOM, the bow is a separate group `<g data-accessory="bow">` at the end of the dog's head group (`data-part="head-rig"`), drawn over the head and ears. It receives the head turn and the breathing lift through the same transform as the head, and follows pose changes with the same rig data and the same easing, so it never slides and never lags by a single frame.
 
-Расположение измерено по двум референсам (`accessories/tools/fit_placement.py … bow`):
+Placement was measured from two reference images (`accessories/tools/fit_placement.py … bow`):
 
-| Поза | x | y | наклон | масштаб |
+| Pose | x | y | Rotation | Scale |
 |---|---|---|---|---|
-| 1 | 62,02 | 13,58 | −5,07° | 0,905 |
-| 2 | 64,88 | 45,11 | 8,52° | 0,998 |
+| 1 | 62.02 | 13.58 | −5.07° | 0.905 |
+| 2 | 64.88 | 45.11 | 8.52° | 0.998 |
 
-На референсах бантик в позе 1 на 10 % меньше, чем в позе 2; размер меняется плавно вместе с головой.
+In the references the bow is 10% smaller in pose 1 than in pose 2; the size changes smoothly together with the head.
 
-## Свои движения
+## Own motion
 
-Поверх привязки к голове; посадка при этом не меняется. Настройки — `BOW_MOTION` в `bowMotion.js`.
+Applied on top of the head attachment; the placement itself does not change. Settings: `BOW_MOTION` in `bowMotion.js`.
 
-| Движение | Как устроено |
+| Motion | How it works |
 |---|---|
-| Мягкое покачивание | Обе половинки плавно взмахивают вверх-вниз вокруг узла, ±4° на краях, один взмах за 3-секундный блок, с лёгким упругим обертоном. Правая чуть опережает левую. Поворот нарастает от узла к краю — узел закреплён на голове. |
-| Встряска при смене позы | Каждая половинка — лёгкая быстрая пружина (3 колебания в секунду), её раскачивает ускорение головы, как ботву морковки. При приседании и вставании — резкое отклонение около 15°, затем несколько затухающих колебаний (около секунды) и снова спокойное покачивание. |
+| Gentle sway | Both loops smoothly flap up and down around the knot, ±4° at the edges, one swing per 3-second block, with a light springy overtone. The right loop slightly leads the left one. The rotation grows from the knot to the edge; the knot stays fixed on the head. |
+| Shake on pose change | Each loop is a light, fast spring (3 oscillations per second) driven by the head's acceleration, like the carrot's leaves. On the crouch and when standing up there is a sharp deflection of about 15°, then a few damped oscillations (about a second) and back to the calm sway. |
 
-Встряска начинается вместе с движением головы и никогда его не опережает. После вставания она
-продолжается в начале следующего цикла и затихает примерно за секунду. Все движения рассчитаны по
-времени последовательности: перемотка, пауза и любой кадр всегда показывают одно и то же,
-цикл повторяется бесконечно.
+The shake starts together with the head movement and never leads it. After the dog stands up it continues into the start of the next cycle and settles within about a second. All motion is computed from the sequence time: seeking, pausing and any single frame always show the same picture, and the frame rate has no effect. The cycle repeats indefinitely.
 
-## Совместимость с TGS
+## TGS compatibility
 
-Посадка — смещение, поворот и масштаб группы; свои движения — анимация контуров (path).
-SVG-файл не меняется. В Lottie/TGS это отдельный слой с родителем «голова», над слоями головы
-и ушей. Первый блок позы 1 с бантиком — отдельный файл (в нём затихает встряска после вставания),
-второй и третий — одинаковые.
+Placement is a group translation, rotation and scale; the own motion is path animation. The SVG file is unchanged. In Lottie/TGS it is a separate layer parented to the head, above the head and ear layers. The first pose-1 block with the bow is a separate file (the shake after standing up settles in it); the second and third are identical.

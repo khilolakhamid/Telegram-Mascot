@@ -1,141 +1,117 @@
-# screen — экран профиля из Figma с собачкой
+# screen — Telegram profile screen with the Dog shop
 
-Экран 402 × 871 pt (iPhone 16 Pro) в предпросмотре iPhone. Рядом с аватаром — анимированная
-собачка из `../mascot` (компонент `DogMascot`, подключён без изменений).
+A Telegram profile screen reproduced from Figma (402 × 871 pt, iPhone 16 Pro) with the animated dog
+next to the avatar and the **Dog** accessories shop. Everything runs inside an interactive iPhone preview.
+The dog comes from `../mascot`, the wearable accessories from `../accessories` and the skins from
+`../mascot/variants`. All of them are used as they are, without modifications.
 
-```text
-screen/
-├── assets/profileScreen.json      векторные элементы экрана из Figma-SVG
-├── components/ProfileGifts.jsx    подарки в шапке профиля (колокольчики): исходные SVG, медленное покачивание
-├── components/ProfileSparkles.jsx белые звёздочки вокруг подарков (та же искра, что на ценниках)
-├── components/ProfileScreen.jsx   экран профиля: секции, Glass-кнопки, собачка (MASCOT_BOX), статус-бар
-├── components/PhoneScreen.jsx     всё внутри iPhone: профиль, окно Dog, статус-бар
-├── components/AccessoriesSheet.jsx окно Dog (по макету Telegram «Buy a Gift»): собачка, баланс, вкладки, сетка
-├── components/AccessoryCard.jsx   карточка аксессуара: обложка и плашка цены
-├── components/BuyButton.jsx       синяя кнопка «Buy for ★ цена» (цена из данных выбранного аксессуара)
-├── components/PriceSparkles.jsx   анимированные искры для всех плашек цены (один компонент)
-├── components/StarIcon.jsx        звезда Telegram (исходный SVG)
-├── components/AccessoryCover.jsx  обложка карточки из SVG аксессуара (морковка, бантик, мячик, уточка, очки, косточка, сыр, розовые очки) и обложки скинов Skeleton Dog / UFO Dog (assets/covers/skeleton-dog-cover.svg, ufo-dog-cover.svg — неподвижные картинки в своих пропорциях)
-├── components/glassesCoverGlint.js блик «вжух» по линзам для обложек очков (зелёных и розовых) с лёгкой анимацией
-├── components/ChristmasHatCover.jsx обложка карточки шапочки (свой SVG, мягкая анимация)
-├── components/IPhonePreview.jsx   корпус iPhone; на узком экране — без корпуса, во всю ширину
-├── components/WornDog.jsx         собачка с надетыми аксессуарами (реестр WEARABLES: мячик, морковка, розовые очки, очки, бантик, сыр, уточка, шапочка)
-├── state/dogStore.jsx             баланс, купленные и надетые аксессуары (сохраняются в браузере)
-├── components/SkinCover.jsx       контекст открытого магазина (обложки скинов теперь — отдельные файлы картинок)
-├── data/skins.js                 модели собачки из ../mascot/variants (Original Dog, Skeleton Dog, UFO Dog)
-├── data/accessories.js            категории, каталог аксессуаров (цена, обложка, аксессуар), баланс
-├── main.jsx                       вход
-├── styles.css
-└── tools/build-preview.mjs        сборка dist/preview.html — одна страница со всем внутри
-```
+## Building the preview
 
-Сборка предпросмотра (Node 18+, TypeScript для JSX):
+Requires Node.js 18+ and TypeScript (used only to compile JSX/TSX; a global `npm i -g typescript`
+or a local install).
 
 ```bash
 node screen/tools/build-preview.mjs   # → screen/dist/preview.html
 ```
 
-Собачка: квадрат 64 × 64 pt, левый верхний угол (216.2, 129.8) в координатах экрана —
-у правого нижнего края аватара, поверх фоновых иконок. Положение задаётся в `MASCOT_BOX`.
+The result is a single self-contained HTML page; open it in any browser. React 18.3.1 is loaded
+from cdnjs. Options:
 
-Окно Dog открывается нажатием на собачку (снизу вверх, профиль уходит назад, как в iOS)
-и закрывается кнопкой X. Нажатие на карточку шапочки надевает настоящий аксессуар
-`ChristmasHat` из `../accessories/head/christmas-hat` на собачку в окне, повторное — снимает
-(только примерка). У карточки в `data/accessories.js` два разных поля: `Cover` — картинка
-в карточке, `accessory` — какой аксессуар надеть.
+```bash
+node screen/tools/build-preview.mjs --out my-preview.html          # custom output path
+node screen/tools/build-preview.mjs --react-bundle react-local.js  # offline: inline a script that sets window.React / window.ReactDOM
+```
 
-Карточки строятся из каталога `ACCESSORIES` в `data/accessories.js`: показываются только
-аксессуары, у которых есть обложка и подключённый компонент (`WEARABLES` в
-`components/AccessoriesSheet.jsx`). Пустых заглушек нет — новая карточка появляется,
-когда в каталог добавлен новый аксессуар.
+## Features
 
-Выбор карточки работает одинаково для любого аксессуара: золотистая обводка, белый блок
-чуть уменьшается внутри неё (внешний размер карточки не меняется), аксессуар надевается
-на собачку, внизу появляется кнопка покупки с ценой выбранного аксессуара. Повторное
-нажатие снимает выбор.
+### Profile screen
 
-Покупка (локально, без настоящих Telegram Stars): «Buy» списывает цену с баланса один раз,
-аксессуар становится купленным и остаётся надетым — и в окне Dog, и на главном экране.
-Купленный аксессуар снимается и надевается повторным нажатием на карточку бесплатно,
-кнопка покупки для него не показывается. Баланс, покупки и надетый аксессуар сохраняются
-в localStorage и переживают перезагрузку. Начать заново: открыть страницу с `?reset`.
+- Vector elements of the Figma screen (`assets/profileScreen.json`), Glass buttons, status bar.
+- The dog sits at the bottom-right edge of the avatar: a 64 × 64 pt box at (216.2, 129.8)
+  in screen coordinates (`MASCOT_BOX` in `components/ProfileScreen.jsx`). It wears the saved style.
+- Gifts in the profile header: pink and blue bells (`assets/profile-gifts/`) float very slowly up
+  and down (±1.3 pt, full cycles of 6.4 s and 7.2 s, out of step), each surrounded by a ring of
+  8 white sparkles that drift and twinkle (`ProfileSparkles`).
 
-Аксессуары: новогодняя шапочка, морковка, бантик, мячик, уточка, очки, косточка, сыр, розовые очки — по 50 ★. Компоненты берутся из
-`../accessories` без изменений. Одновременно надевается один аксессуар на голову (шапочка, бантик,
-уточка или сыр), один на глаза (очки или розовые очки) и один во рот (морковка, мячик или косточка): выбор другого в том же месте заменяет прежний.
-Кнопка покупки относится к последней выбранной некупленной карточке. Вкладка Head показывает
-шапочку, бантик, уточку и сыр.
+### Dog shop
 
-Скины: Skeleton Dog и UFO Dog (`../mascot/variants`, из ветки `skins`, коммит b1e6521, без
-изменений) продаются в магазине по 1000 ★ — в категориях All Accessories и Skins. Работает та
-же логика: примерка при выборе карточки, «Buy for ★ 1000» (при нехватке звёзд кнопка неактивна),
-списание один раз, бесплатное повторное надевание. Скин занимает отдельное место `skin`:
-одновременно активен только один. Без скина собачка — бесплатная Original Dog (карточки у неё нет).
-Скин меняет всю модель в окне Dog и на главном экране; аксессуары остаются надетыми.
-Начальный баланс — 3000 ★. Кнопка Restart под корпусом iPhone (в панели предпросмотра) сбрасывает
-всё тестовое состояние: баланс, покупки, надетые вещи и скин; `?reset` в адресе делает то же при загрузке.
+- Opens when the dog is tapped (slides up while the profile recedes, as in iOS) and closes with the X button.
+- Header: the dog wearing the current try-on, the title "Dog", the description and the star balance.
+- Categories in a horizontally scrolling tab row: **My Stuff** (owned items, no price tags),
+  **All Items**, **Eyes**, **Head**, **Mouth**, **Skins** (`ACCESSORY_CATEGORIES` in `data/accessories.js`).
+  The shop always opens on My Stuff.
+- All Items order: bow, green glasses, duck, carrot, cheese, Skeleton Dog, pink glasses, UFO Dog,
+  then the remaining items, followed by 3 empty placeholder cards (`ALL_ITEMS_ORDER`, `EMPTY_CARDS`).
+- Items: Christmas hat (free, owned by everyone, shown only in My Stuff), carrot, bow, ball, duck,
+  glasses, cheese, pink glasses (50 ★ each), Skeleton Dog and UFO Dog skins (1000 ★ each).
+  The bone accessory is not sold in the shop; its component remains in `../accessories/mouth/bone`.
+- Card covers are separate files in `assets/covers/` (or the Christmas hat's own animated cover);
+  the dog always wears the real components from `../accessories`.
 
-Подарки в профиле: розовые и голубые колокольчики (`assets/profile-gifts/`, исходные SVG без
-изменений) стоят в шапке по макету и очень медленно покачиваются вверх-вниз (±1,3 pt, полный
-цикл 6,4 и 7,2 с — вразнобой). Позиции заданы в `PROFILE_GIFTS` в точках экрана 402 × 871.
-Вокруг каждого подарка — белые звёздочки (`ProfileSparkles`, форма искры из `PriceSparkles`):
-кольцо из 8 искр разного размера; каждая сама по себе медленно плывёт вверх-вниз (±2 pt) и мягко мерцает.
+### Selection, purchase and Apply Style
 
-Категории магазина (горизонтально прокручиваемые табы): My Stuff — только купленное, без ценников;
-All Items — все товары; магазин при каждом открытии открывается на My Stuff; Eyes, Head, Mouth — аксессуары по месту; Skins — скины.
-Список и порядок — `ACCESSORY_CATEGORIES` в `data/accessories.js`.
+- **Try-on.** Tapping a card outlines it in gold and puts the item on the dog in the shop.
+  Tapping it again removes it.
+- **One item per slot** (head, eyes, mouth, skin). Picking another item for the same slot replaces
+  the previous pick: its outline, its price in the total and its try-on go away.
+  Items in different slots combine and their prices add up.
+- **Skins and accessories never mix.** Picking a skin drops the picked accessories; picking an accessory
+  drops the skin and brings back the original dog. Removing a skin brings back the saved accessories;
+  removing the last accessory brings back the saved skin.
+- **Buy.** The bottom button shows "Buy for ★ total" for the unbought items in the selection. Buying charges
+  the total once, and the items appear in My Stuff. With too few stars, the button looks normal but does nothing.
+- **Apply Style.** For owned items the button reads "Apply Style": it saves the look being tried on and
+  closes the shop. Closing with X does not save the try-on.
+- **Pin.** A light-grey pin (`assets/icons/pin.svg`) marks the cards of what the dog wears (accessories or
+  the active skin). It moves only after Apply Style. In My Stuff the cards are square (1 : 1).
 
-Обложки карточек мячика, морковки, косточки и зелёных очков — отдельные файлы `assets/covers/*-cover.svg`
-(не SVG самих аксессуаров); на собачку надеваются по-прежнему компоненты из `../accessories`.
+### State and persistence
 
-Новогодняя шапочка — единственный бесплатный аксессуар: доступна всем с самого начала, показывается
-только в My Stuff (без ценника), надевается и снимается без покупки. При нехватке звёзд кнопка
-«Buy» выглядит как обычно, но нажатие ничего не покупает.
+- Starting balance: 3000 ★. Purchases, balance and the worn style are saved (`state/dogStore.jsx`):
+  in the page's database when it runs as a claude.ai artifact, and in `localStorage` everywhere.
+- **Restart** below the iPhone frame resets everything: balance, purchases, worn items and skin.
+  `?reset` in the URL does the same on load, and `?reset&stars=5000` sets a test balance.
 
-Кнопка внизу окна Dog: для некупленной выбранной вещи — «Buy for ★ цена», для своей (купленной или
-бесплатной шапочки) — «Apply Style»: надевает выбранное, сохраняет и закрывает магазин; звёзды не тратятся.
-После покупки кнопка сменяется на «Apply Style».
+### Continuous animation
 
-Pin (`assets/icons/pin.svg`, светло-серый) — в левом верхнем углу карточки того, что надето на собачку
-(аксессуар или активный скин); переезжает при смене и сохраняется вместе с покупками. В My Stuff
-карточки квадратные (1 : 1, та же ширина), картинки по центру, без ценников.
+`state/mascotClock.js` provides one shared timeline for the dog in the profile and the dog in the shop.
+The clock starts once, when the page loads, and is never reset. A dog that appears (a new skin, the shop
+opening) starts at the current moment (`startTime={mascotTime()}`), and running dogs are aligned to the
+clock together twice a second. Accessories are toggled through `enabled`, without re-creating the dog,
+so they pick up its current phase. Animation speeds and timings are unchanged.
 
-Золотистая обводка — только у карточек, выбранных вручную в текущем открытии магазина; надетое
-отмечено лишь Pin. Первое нажатие на надетую вещь выделяет её (и показывает Apply Style),
-повторное — снимает. При закрытии магазина выделение сбрасывается, надетое и Pin остаются.
+## Files
 
-Выбор и сохранение — разные состояния: нажатие на карточку только выделяет (обводка) и примеряет вещь
-в окне; покупка только списывает звёзды; надетым вещь становится (и получает Pin) лишь по Apply Style,
-который сохраняет примеренный образ и закрывает магазин. Закрытие крестиком примерку не сохраняет.
-
-All Items: сначала бантик, зелёные очки, уточка, морковка, сыр, Skeleton Dog, розовые очки, UFO Dog,
-затем остальные товары; в конце 2 пустые карточки-шаблона (`ALL_ITEMS_ORDER`, `EMPTY_CARDS`).
-
-Покупка нескольких вещей: каждая выбранная некупленная карточка (аксессуар или скин, сколько угодно)
-получает обводку, «Buy for ★» показывает их сумму; повторное нажатие убирает вещь из суммы. Покупка
-списывает сумму один раз, все выбранные вещи появляются в My Stuff. Выбор сохраняется при смене
-вкладок и сбрасывается при повторном открытии магазина. Купленные вещи в сумму не входят — для них Apply Style.
-
-Косточка убрана из магазина (компонент в `../accessories/mouth/bone` не тронут; если вернуть — запись
-в `data/accessories.js` и `WEARABLES`). В конце All Items — 3 пустые карточки (`EMPTY_CARDS`).
-
-Выбор — одна вещь на место (голова, глаза, рот, скин): новая вещь на то же место заменяет прежнюю
-(обводка, цена в сумме и примерка на собачке уходят); разные места суммируются.
-
-### Непрерывная анимация собачки
-
-`state/mascotClock.js` — единый таймлайн для собачки в профиле и в магазине Dog. Часы запускаются один раз
-при загрузке страницы и ничем не сбрасываются. Новая собачка (при смене скина или открытии магазина)
-стартует с текущего момента (`startTime={mascotTime()}`). Работающие собачки дважды в секунду
-выравниваются по часам — все вместе, на один и тот же момент. Аксессуары включаются через `enabled`, без
-пересоздания собачки, и подхватывают её текущую фазу. Скорость и тайминги анимаций не менялись.
-Обложки скинов уменьшены до 85 % (68 px в ширину), центр сохранён.
-
-### Скины и аксессуары не совмещаются
-
-Скин — это целая модель собачки, поэтому вместе с аксессуарами (Head, Eyes, Mouth) он не носится.
-- Выбор скина снимает выбранные аксессуары: обводка снимается, цена уходит из суммы.
-- Выбор аксессуара снимает скин: возвращается оригинальная собачка.
-- Если снять скин, возвращаются сохранённые аксессуары. Если снять последний аксессуар, возвращается сохранённый скин.
-- То же правило действует при Apply Style (`wear` в state/dogStore.jsx) и при загрузке сохранённого стиля.
-- Купленные вещи остаются в My Stuff.
+```text
+screen/
+├── assets/
+│   ├── profileScreen.json        vector elements of the Figma screen
+│   ├── covers/                   card covers (ball, carrot, bone, glasses, Christmas hat, Skeleton Dog, UFO Dog)
+│   ├── icons/                    pin.svg, type-star.svg
+│   └── profile-gifts/            bells-pink.svg, bells-blue.svg
+├── components/
+│   ├── IPhonePreview.jsx         iPhone frame and the preview panel (Restart); full width on narrow screens
+│   ├── PhoneScreen.jsx           everything inside the iPhone: profile, Dog shop, status bar
+│   ├── ProfileScreen.jsx         profile screen: sections, Glass buttons, the dog (MASCOT_BOX), status bar
+│   ├── ProfileGifts.jsx          gifts in the profile header (bells)
+│   ├── ProfileSparkles.jsx       white sparkles around the gifts
+│   ├── AccessoriesSheet.jsx      the Dog shop: dog, balance, tabs, grid, selection logic
+│   ├── AccessoryCard.jsx         a shop card: cover, price pill, outline, pin
+│   ├── AccessoryCover.jsx        card covers built from SVG files, with light cover animations
+│   ├── ChristmasHatCover.jsx     the Christmas hat cover (own SVG, soft animation)
+│   ├── glassesCoverGlint.js      lens glint for the glasses covers
+│   ├── SkinCover.jsx             open-shop context used by the covers
+│   ├── PriceSparkles.jsx         animated sparkles on the price pills
+│   ├── BuyButton.jsx             "Buy for ★ price" / "Apply Style" button
+│   ├── StarIcon.jsx              Telegram Star icon
+│   └── WornDog.jsx               the dog with its worn accessories (WEARABLES registry)
+├── data/
+│   ├── accessories.js            categories, catalogue, prices, covers, item order, starting balance
+│   └── skins.js                  dog models from ../mascot/variants (Original, Skeleton, UFO)
+├── state/
+│   ├── dogStore.jsx              balance, owned items, worn style, persistence
+│   └── mascotClock.js            shared animation timeline
+├── tools/build-preview.mjs       builds dist/preview.html
+├── main.jsx                      entry point
+└── styles.css
+```
