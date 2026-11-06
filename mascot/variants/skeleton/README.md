@@ -1,65 +1,65 @@
-# Skeleton Dog — скин маскота
+# Skeleton Dog — mascot skin
 
-Самостоятельная модель собачки: свои SVG, своя структура слоёв, свои данные морфинга
-и свой движок отрисовки. Поведение (12-секундная последовательность, тайминг, амплитуды,
-точки вращения, движения частей тела) общее с Original Dog: настройки поведения
-и траектории частей тела берутся из оригинального компонента только для чтения.
-Поэтому при смене скина меняется только внешний вид.
+A standalone model of the dog: its own SVGs, its own layer structure, its own morph data
+and its own rendering engine. The behaviour (the 12-second sequence, timing, amplitudes,
+pivot points, body-part movements) is shared with the Original Dog: the behaviour settings
+and body-part trajectories are read from the original component, read-only.
+Switching the skin therefore changes only the look.
 
-## Состав
+## Files
 
 ```text
 variants/
-├── index.js                      реестр скинов: SKINS.original, SKINS.skeleton
+├── index.js                      skin registry: SKINS.original, SKINS.skeleton
 └── skeleton/
-    ├── assets/                   skeleton-pose-1.svg, skeleton-pose-2.svg (исходники)
+    ├── assets/                   skeleton-pose-1.svg, skeleton-pose-2.svg (sources)
     ├── animations/
-    │   ├── skeletonAnimation.js  движок скина (createSkeletonAnimation)
-    │   ├── skeletonMorph.js      морфинг контуров, градиентов, свечения
+    │   ├── skeletonAnimation.js  skin engine (createSkeletonAnimation)
+    │   ├── skeletonMorph.js      morphing of outlines, gradients and glow
     │   └── skeletonMorphData.json
     ├── components/SkeletonDog.jsx
     ├── tools/build_skeleton_data.py
-    ├── demo/                     сравнение Original и Skeleton на общем таймере
+    ├── demo/                     Original vs Skeleton on a shared timer
     └── index.js
 ```
 
-## Использование
+## Usage
 
 ```jsx
 import { SkeletonDog } from './mascot/variants/skeleton/index.js';
 <SkeletonDog size={240} />
 ```
 
-Пропсы и методы те же, что у `DogMascot`: `size`, `playing`, `startTime`, `onFrame`,
-`play()`, `pause()`, `seek()`. Переключение скинов:
+Props and methods are the same as on `DogMascot`: `size`, `playing`, `startTime`, `onFrame`,
+`play()`, `pause()`, `seek()`. Switching skins:
 
 ```jsx
 import { SKINS } from './mascot/variants/index.js';
-const { Component } = SKINS[skin];   // 'original' | 'skeleton'
+const { Component } = SKINS[skin];   // 'original' | 'skeleton' | 'ufo'
 <Component size={240} />
 ```
 
-Сравнение двух скинов: `cd mascot && npm run dev`, затем открыть
+To compare the two skins: `cd mascot && npm run dev`, then open
 `http://localhost:5173/variants/skeleton/demo/`.
 
-## Как устроены кости
+## How the bones work
 
-Каждая кость, ребро, позвонок и пятно свечения — элемент своей части тела:
+Every bone, rib, vertebra and glow spot is an element of its own body part:
 
-- кости лап, подушечки и пальцы — в группе лапы: поворачиваются вместе с ней,
-  а их форма плавно переходит от первой позы ко второй;
-- рёбра и кости корпуса — в группе корпуса: дышат вместе с ним и плавно
-  переезжают на свои места во второй позе;
-- позвонки хвоста — в группе хвоста и покачиваются вместе с ним;
-- глаза: основа, градиент, свечение и блик моргают вместе.
+- leg bones, pads and toes belong to the leg group: they rotate with it,
+  and their shape blends smoothly from the first pose to the second;
+- ribs and body bones belong to the body group: they breathe with it and
+  move smoothly to their places in the second pose;
+- tail vertebrae belong to the tail group and sway with it;
+- eyes: the base, gradient, glow and highlight blink together.
 
-Свечение — размытие (`feGaussianBlur`), его сила плавно меняется между позами.
-Блик на мордочке в первой позе радиальный, а во второй линейный, поэтому на переходе
-два его варианта плавно сменяют друг друга.
+The glow is a blur (`feGaussianBlur`) whose strength changes smoothly between the poses.
+The highlight on the muzzle is radial in the first pose and linear in the second, so during
+the transition its two versions cross-fade.
 
-## Пересборка данных
+## Rebuilding the data
 
-После изменения SVG в `assets/`:
+After changing the SVGs in `assets/`:
 
 ```bash
 python3 mascot/variants/skeleton/tools/build_skeleton_data.py
@@ -67,5 +67,5 @@ python3 mascot/variants/skeleton/tools/build_skeleton_data.py
 
 ## TGS
 
-Размытие относится к эффектам слоя, а их Telegram TGS не поддерживает. При экспорте
-в стикер свечение нужно будет заменить радиальными градиентами с прозрачным краем.
+Blur is a layer effect, and Telegram TGS does not support layer effects. For a sticker export
+the glow has to be replaced with radial gradients that fade to transparent at the edge.

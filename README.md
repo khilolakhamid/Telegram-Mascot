@@ -1,23 +1,28 @@
-# Telegram Mascot
+# Telegram Mascot — skins branch
 
-Анимированный маскот для Telegram: собачка, её аксессуары и экран приложения.
+This branch contains the animated dog and its alternative skins: Skeleton Dog and UFO Dog.
+The complete project (dog, accessories, skins and the Telegram profile screen with the Dog shop)
+is on the [`main`](https://github.com/khilolakhamid/Telegram-Mascot/tree/main) branch.
 
 ```text
 Telegram-Mascot/
-├── mascot/        собачка: SVG, анимации, React-компонент, демо
-├── accessories/   аксессуары (следующий этап)
-└── screen/        экран из Figma (следующий этап)
+└── mascot/          the animated dog: source SVGs, animation engine, React component, demo
+    └── variants/    skins: Skeleton Dog and UFO Dog
 ```
 
-## Собачка
+## Getting started
 
-Готовый компонент с программной SVG-анимацией. Он повторяет 12-секундную последовательность:
-три блока первой позы по 3 секунды, затем игривое приседание и возвращение (3 секунды).
+Requires Node.js 18 or newer.
 
 ```bash
 cd mascot
 npm install
-npm run dev
+npm run dev        # http://localhost:5173
 ```
 
-Подробности — в [`mascot/README.md`](mascot/README.md).
+Skin comparison pages: `/variants/skeleton/demo/` and `/variants/ufo/demo/` on the same dev server.
+
+## Documentation
+
+- [`mascot/README.md`](mascot/README.md): the dog component and its animation
+- [Skeleton Dog](mascot/variants/skeleton/README.md) and [UFO Dog](mascot/variants/ufo/README.md): the skins
