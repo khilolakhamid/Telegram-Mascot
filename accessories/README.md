@@ -11,6 +11,7 @@
 | Уточка | [`head/duck/`](head/duck/) | `Duck` |
 | Сыр | [`head/cheese/`](head/cheese/) | `Cheese` |
 | Очки | [`eyes/glasses/`](eyes/glasses/) | `Glasses` |
+| Розовые очки | [`eyes/pink-glasses/`](eyes/pink-glasses/) | `PinkGlasses` |
 | Морковка во рту | [`mouth/carrot/`](mouth/carrot/) | `Carrot` |
 | Мячик во рту | [`mouth/ball/`](mouth/ball/) | `Ball` |
 | Косточка во рту | [`mouth/bone/`](mouth/bone/) | `Bone` |
@@ -27,7 +28,7 @@ import { ChristmasHat } from '../accessories/head/christmas-hat';
 ```
 
 Несколько аксессуаров сразу — вложением, внешним идёт `ChristmasHat`
-(`Duck`, `Cheese`, `Bow`, `Glasses`, `Carrot`, `Ball` и `Bone` можно вкладывать друг в друга):
+(`Duck`, `Cheese`, `Bow`, `Glasses`, `PinkGlasses`, `Carrot`, `Ball` и `Bone` можно вкладывать друг в друга):
 
 ```tsx
 import { Carrot } from '../accessories/mouth/carrot';
@@ -67,7 +68,8 @@ accessories/
 │   ├── duck/                  уточка (Duck.tsx, SVG, анимации)
 │   └── cheese/                сыр (Cheese.tsx, SVG, анимации)
 ├── eyes/                      аксессуары для глаз
-│   └── glasses/               очки (Glasses.tsx, SVG, анимации)
+│   ├── glasses/               очки (Glasses.tsx, SVG, анимации)
+│   └── pink-glasses/          розовые очки (PinkGlasses.tsx, SVG, анимации)
 ├── mouth/                     аксессуары для рта
 │   ├── carrot/                морковка (Carrot.tsx, SVG, анимации)
 │   ├── ball/                  мячик (Ball.tsx, SVG, анимации)
@@ -106,7 +108,8 @@ createHeadAccessory(svg, {
 numpy, scipy, opencv-python). Последний аргумент — по каким цветам искать: `hat` (красный и
 серо-голубой), `carrot` (оранжевый и зелёный), `bow` (розовый), `ball`
 (жёлто-зелёный), `duck` (жёлтый и оранжевый), `glasses` (салатовый и зелёный), `bone`
-(кремовый и тёмно-коричневый) или `cheese` (жёлтый и коричнево-оранжевый).
+(кремовый и тёмно-коричневый), `cheese` (жёлтый и коричнево-оранжевый) или `pink-glasses`
+(светло- и тёмно-розовый).
 Если аксессуар закрывает глаза собачки, скриншот совмещается с ней по контуру и носу:
 
 ```bash

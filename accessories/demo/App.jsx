@@ -6,6 +6,7 @@ import { Bow } from '../head/bow';
 import { Ball } from '../mouth/ball';
 import { Duck } from '../head/duck';
 import { Glasses } from '../eyes/glasses';
+import { PinkGlasses } from '../eyes/pink-glasses';
 import { Bone } from '../mouth/bone';
 import { Cheese } from '../head/cheese';
 
@@ -26,12 +27,13 @@ export default function App() {
   const dog = useRef(null);
   const [playing, setPlaying] = useState(true);
   const [glasses, setGlasses] = useState(false);
+  const [pinkGlasses, setPinkGlasses] = useState(true);
   const [duck, setDuck] = useState(false);
   const [ball, setBall] = useState(false);
   const [bow, setBow] = useState(false);
   const [carrot, setCarrot] = useState(false);
   const [bone, setBone] = useState(false);
-  const [cheese, setCheese] = useState(true);
+  const [cheese, setCheese] = useState(false);
   const [hat, setHat] = useState(false);
   const [info, setInfo] = useState({ time: 0, blockIndex: 0, stage: 'pose 1' });
   const [size, setSize] = useState(240);
@@ -43,7 +45,7 @@ export default function App() {
 
   return (
     <main className="player">
-      <h1>Примерка: сыр</h1>
+      <h1>Примерка: розовые очки</h1>
       <div
         className={`stage bg-${bg}`}
         style={{
@@ -59,13 +61,15 @@ export default function App() {
           <Cheese enabled={cheese}>
             <Bow enabled={bow}>
               <Glasses enabled={glasses}>
-                <Carrot enabled={carrot}>
-                  <Ball enabled={ball}>
-                    <Bone enabled={bone}>
-                      <DogMascot ref={dog} size={size} playing={playing} onFrame={setInfo} />
-                    </Bone>
-                  </Ball>
-                </Carrot>
+                <PinkGlasses enabled={pinkGlasses}>
+                  <Carrot enabled={carrot}>
+                    <Ball enabled={ball}>
+                      <Bone enabled={bone}>
+                        <DogMascot ref={dog} size={size} playing={playing} onFrame={setInfo} />
+                      </Bone>
+                    </Ball>
+                  </Carrot>
+                </PinkGlasses>
               </Glasses>
             </Bow>
           </Cheese>
@@ -83,6 +87,9 @@ export default function App() {
       </div>
 
       <div className="row" role="group" aria-label="Аксессуары">
+        <button type="button" className={pinkGlasses ? 'primary' : ''} aria-pressed={pinkGlasses} onClick={() => setPinkGlasses(v => !v)}>
+          🩷 Розовые очки: {pinkGlasses ? 'вкл' : 'выкл'}
+        </button>
         <button type="button" className={cheese ? 'primary' : ''} aria-pressed={cheese} onClick={() => setCheese(v => !v)}>
           🧀 Сыр: {cheese ? 'вкл' : 'выкл'}
         </button>
@@ -90,7 +97,7 @@ export default function App() {
           🦴 Косточка: {bone ? 'вкл' : 'выкл'}
         </button>
         <button type="button" className={glasses ? 'primary' : ''} aria-pressed={glasses} onClick={() => setGlasses(v => !v)}>
-          🕶️ Очки: {glasses ? 'вкл' : 'выкл'}
+          🕶️ Зелёные очки: {glasses ? 'вкл' : 'выкл'}
         </button>
         <button type="button" className={duck ? 'primary' : ''} aria-pressed={duck} onClick={() => setDuck(v => !v)}>
           🐥 Уточка: {duck ? 'вкл' : 'выкл'}

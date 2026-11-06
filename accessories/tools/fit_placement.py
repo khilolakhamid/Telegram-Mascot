@@ -14,6 +14,7 @@ COLOURS        which colour masks to fit by: hat (red cloth + blue-grey outline,
                or glasses (lime frame + green frame edge)
                or bone (cream bone + dark brown outline)
                or cheese (yellow cheese + brown-orange outline)
+               or pink-glasses (light pink frame + dark pink frame edge)
 
 Prints { x, y, rotate } — the accessory's SVG origin in the dog's 240×240 frame and its rotation —
 ready for the `placement.pose1` / `placement.pose2` of an accessory.
@@ -91,16 +92,30 @@ def register_by_outline(ref, dog):
 
 
 def register(ref, dog):
-    """Screenshot px → dog units: by eyes and nose when all three are visible, else by the outline."""
-    fr = dark_features(ref)
+    """Screenshot px → dog units: by eyes and nose when all three are visible, else by the outline.
+
+    The three darkest shapes are trusted as eyes and nose only if they line up with the dog's eyes and
+    nose (small residual) at the scale the dog's outline suggests; dark lenses of glasses, for example,
+    can look like eyes, and then the outline is used instead.
+    """
+    fr, fd = dark_features(ref), dark_features(dog) / Z
     if len(fr) == 3:
-        return similarity(fr, dark_features(dog) / Z)
+        M = similarity(fr, fd)
+        residual = np.abs(fr @ M[:, :2].T + M[:, 2] - fd).max()
+        rm, dm = outline_mask(ref), outline_mask(dog)
+        ys, yd = np.nonzero(rm)[0], np.nonzero(dm)[0]
+        s_outline = (yd.max() - yd.min()) / Z / (ys.max() - ys.min())
+        if residual < 0.6 and abs(np.hypot(*M[:, 0]) / s_outline - 1) < 0.06:
+            return M
     return register_by_outline(ref, dog)
 
 
 def masks(img, alpha=None, colours='hat'):
     b, g, r = [img[..., i].astype(int) for i in range(3)]
-    if colours == 'cheese':
+    if colours == 'pink-glasses':
+        one = (r > 220) & (b > 130) & (g < 200) & (r - g > 40)                # light pink frame
+        two = (r > 170) & (g < 80) & (b > 40) & (b < 140)                     # dark pink frame edge
+    elif colours == 'cheese':
         one = (r > 225) & (g > 185) & (b < 140) & (r - b > 120)               # yellow cheese
         two = (r > 150) & (g > 60) & (g < 130) & (b < 60) & (r - g > 60)      # brown-orange outline
     elif colours == 'bone':

@@ -12,6 +12,10 @@ export { Cheese, createCheese, createCheeseMotion, CHEESE_PLACEMENT, CHEESE_SVG,
 
 // Eyes accessories
 export { Glasses, createGlasses, createGlassesMotion, GLASSES_PLACEMENT, GLASSES_SVG, GLASSES_MOTION } from './eyes/glasses/index.ts';
+export {
+  PinkGlasses, createPinkGlasses, createPinkGlassesMotion,
+  PINK_GLASSES_PLACEMENT, PINK_GLASSES_SVG, PINK_GLASSES_MOTION
+} from './eyes/pink-glasses/index.ts';
 
 // Mouth accessories
 export { Carrot, createCarrot, createCarrotMotion, CARROT_PLACEMENT, CARROT_SVG, CARROT_MOTION } from './mouth/carrot/index.ts';
