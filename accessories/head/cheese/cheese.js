@@ -1,5 +1,5 @@
 /**
- * Cheese accessory for the Telegram Mascot dog — lies on the head.
+ * Cheese accessory for the telegram-mascot dog — lies on the head.
  *
  *   import { createCheese } from '../accessories/head/cheese';
  *   const cheese = createCheese(dogSvg);     // after the dog is drawn into dogSvg

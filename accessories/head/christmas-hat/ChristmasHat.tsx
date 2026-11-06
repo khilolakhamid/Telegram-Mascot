@@ -50,7 +50,7 @@ function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
 }
 
 /**
- * Christmas hat for the Telegram Mascot dog — a separate accessory, put on the dog from outside.
+ * Christmas hat for the telegram-mascot dog — a separate accessory, put on the dog from outside.
  *
  *   import { DogMascot } from '../mascot/index.js';
  *   import { ChristmasHat } from '../accessories/head/christmas-hat';

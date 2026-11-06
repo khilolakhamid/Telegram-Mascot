@@ -2,7 +2,7 @@
   "name": "telegram-mascot-dog",
   "private": true,
   "version": "0.1.0",
-  "description": "Telegram Mascot — animated dog component (programmatic SVG animation)",
+  "description": "telegram-mascot — animated dog component (programmatic SVG animation)",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -1,4 +1,4 @@
-// Glasses — eyes accessory for the Telegram Mascot dog. Import them on their own:
+// Glasses — eyes accessory for the telegram-mascot dog. Import them on their own:
 //   import { Glasses } from '<path>/accessories/eyes/glasses';
 export { Glasses, default } from './Glasses';
 export type { GlassesProps } from './Glasses';

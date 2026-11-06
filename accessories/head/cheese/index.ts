@@ -1,4 +1,4 @@
-// Cheese — head accessory for the Telegram Mascot dog. Import it on its own:
+// Cheese — head accessory for the telegram-mascot dog. Import it on its own:
 //   import { Cheese } from '<path>/accessories/head/cheese';
 export { Cheese, default } from './Cheese';
 export type { CheeseProps } from './Cheese';

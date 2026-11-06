@@ -1,6 +1,6 @@
 # glasses — Glasses
 
-An eye accessory for the Telegram Mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the glasses are put on from the outside and removed without a trace.
+An eye accessory for the telegram-mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the glasses are put on from the outside and removed without a trace.
 
 ## Usage
 

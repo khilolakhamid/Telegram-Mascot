@@ -1,4 +1,4 @@
-# Telegram Mascot
+# telegram-mascot
 
 An animated dog mascot for Telegram, with wearable accessories, alternative skins and a Telegram-style
 profile screen that includes the **Dog** accessories shop.
@@ -21,7 +21,7 @@ The animation is built in 3-second blocks to fit Telegram's animated sticker (TG
 ## Repository structure
 
 ```text
-Telegram-Mascot/
+telegram-mascot/
 ├── mascot/              the animated dog: source SVGs, animation engine, React component, demo
 │   └── variants/        skins: Skeleton Dog and UFO Dog
 ├── accessories/         wearable accessories (head, eyes, mouth), shared engine, try-on page

@@ -1,6 +1,6 @@
 # carrot — Carrot in the mouth
 
-A mouth accessory for the Telegram Mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the carrot is put on from the outside and removed without a trace.
+A mouth accessory for the telegram-mascot dog. It is a standalone component: the dog (`mascot/`) is not modified; the carrot is put on from the outside and removed without a trace.
 
 ## Usage
 

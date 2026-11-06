@@ -1,5 +1,5 @@
 /**
- * Duck accessory for the Telegram Mascot dog — sits on the head.
+ * Duck accessory for the telegram-mascot dog — sits on the head.
  *
  *   import { createDuck } from '../accessories/head/duck';
  *   const duck = createDuck(dogSvg);         // after the dog is drawn into dogSvg
